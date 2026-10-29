@@ -1,0 +1,16 @@
+# 本地源码缓存：保留目录占位，实际仓库不提交。
+.cache/repos/*
+!.cache/repos/.gitkeep
+# 依赖、构建制品和本地运行状态。
+node_modules/
+dist/
+build/
+coverage/
+__pycache__/
+*.py[cod]
+*.test
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db

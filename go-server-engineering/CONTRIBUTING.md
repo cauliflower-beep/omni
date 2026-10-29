@@ -1,0 +1,37 @@
+# 内容维护约定
+
+## 事实、推断与验证
+
+明确标注源码事实、分析推断、设计建议、待验证假设。模块 practice.md 中的建议需说明适用条件，不把单个项目的实现称为普遍标准。引用规范或语言行为时链接官方文档、原始论文或项目源码。
+
+## 版本与证据
+
+分析前记录规范仓库 URL、分支、完整 commit SHA、版本标签（如有）和核验日期。源码使用固定 SHA 的永久链接，并记录关键符号；行号仅作辅助。分支与标签不能替代 SHA。
+
+样本升级时保留旧分析基线，记录新基线与差异；先核对实现，再更新结论。托管迁移记录旧地址与规范地址，不根据归档标志直接推断停止维护。samples/registry.json 是样本身份与当前选定分析基线的入口；每份分析仍须携带自己的证据基线。
+
+## 新增样本
+
+1. 在 samples/registry.json 登记唯一 id、产品、规范仓库及核验状态。
+2. 使用 templates/sample.md 建立 overview.md，建立 module-map.md。
+3. 先固定源码版本，再定位相关模块；实现细节写入模块目录，不在样本目录重复维护。
+
+## 新增模块与分析
+
+1. 模块职责写入 modules/catalog.json，确认与已有模块的边界。
+2. 模块目录包含 README.md、implementations/、comparison.md、practice.md。
+3. 使用 templates/implementation.md 添加 implementations/<sample-id>.md，再从样本 module-map.md 链接回来。
+4. 在 modules/coverage.json 更新唯一的覆盖记录；一条 sample_id + module_id 只能有一条当前记录。
+5. 比较中链接实现分析，实践建议链接比较、专题和实验，避免孤立结论。
+
+## 覆盖状态
+
+无记录表示待检索；located 表示已定位；analyzed 表示已分析；validated 表示有相关实验验证；not_found 表示在注明的版本和检索范围内未发现；not_applicable 表示不适用并给出理由。validated 仅针对记录中明确验证的行为，不表示整个模块得到全面验证。
+
+## 实验与代码
+
+实验记录环境、命令、预期、实际结果和局限；没运行就写未运行。性能数据注明环境和负载。概念动画不是 Go 运行证据。labs 中的实验按需独立建 Go module，不提前创建全局 go.mod 或 go.work；参考应用和脚手架未来分别管理依赖。
+
+## 提交与占位
+
+空叶目录保留 .gitkeep；有实际文件后移除该目录内的 .gitkeep。不要提交本地样本仓库、依赖目录、密钥或构建制品。可复现且脱敏的实验结果可以提交。当前上级目录尚未初始化 Git；本结构不自动执行 git init、提交或推送。

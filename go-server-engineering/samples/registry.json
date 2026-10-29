@@ -1,0 +1,139 @@
+{
+  "format_version": 1,
+  "samples": [
+    {
+      "id": "answer",
+      "name": "Apache Answer",
+      "purpose": "问答社区",
+      "repository_url": "https://github.com/apache/answer",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered"
+    },
+    {
+      "id": "pocketbase",
+      "name": "PocketBase",
+      "purpose": "可嵌入的通用后端底座",
+      "repository_url": "https://ganigeorgiev.com/pocketbase/pocketbase",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered",
+      "previous_repository_url": "https://github.com/pocketbase/pocketbase",
+      "note": "上轮检索发现托管迁移；深入分析前须重新核验规范地址并固定 SHA。"
+    },
+    {
+      "id": "memos",
+      "name": "Memos",
+      "purpose": "自托管笔记",
+      "repository_url": "https://github.com/usememos/memos",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered"
+    },
+    {
+      "id": "navidrome",
+      "name": "Navidrome",
+      "purpose": "音乐管理与流媒体",
+      "repository_url": "https://github.com/navidrome/navidrome",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered"
+    },
+    {
+      "id": "gotify",
+      "name": "Gotify",
+      "purpose": "消息推送",
+      "repository_url": "https://github.com/gotify/server",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered"
+    },
+    {
+      "id": "gitea",
+      "name": "Gitea",
+      "purpose": "Git 托管与研发协作",
+      "repository_url": "https://github.com/go-gitea/gitea",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered"
+    },
+    {
+      "id": "beszel",
+      "name": "Beszel",
+      "purpose": "服务器监控",
+      "repository_url": "https://github.com/henrygd/beszel",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered"
+    },
+    {
+      "id": "1panel",
+      "name": "1Panel",
+      "purpose": "服务器管理面板",
+      "repository_url": "https://github.com/1Panel-dev/1Panel",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered"
+    },
+    {
+      "id": "photoprism",
+      "name": "PhotoPrism",
+      "purpose": "照片与视频管理",
+      "repository_url": "https://github.com/photoprism/photoprism",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered"
+    },
+    {
+      "id": "mattermost",
+      "name": "Mattermost",
+      "purpose": "团队通信与协作",
+      "repository_url": "https://github.com/mattermost/mattermost",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered"
+    },
+    {
+      "id": "casdoor",
+      "name": "Casdoor",
+      "purpose": "身份与访问管理",
+      "repository_url": "https://github.com/casdoor/casdoor",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered"
+    },
+    {
+      "id": "gatus",
+      "name": "Gatus",
+      "purpose": "健康检查与状态页",
+      "repository_url": "https://github.com/TwiN/gatus",
+      "registered_on": "2026-10-29",
+      "source_revision": null,
+      "source_ref": null,
+      "verified_at": null,
+      "status": "registered"
+    }
+  ]
+}

@@ -1,0 +1,227 @@
+{
+  "format_version": 1,
+  "groups": [
+    {
+      "id": "application",
+      "title": "应用组织与生命周期",
+      "modules": [
+        {
+          "id": "application/bootstrap",
+          "title": "启动装配",
+          "path": "application/bootstrap",
+          "purpose": "从进程入口装配一个可提供服务的应用。"
+        },
+        {
+          "id": "application/configuration",
+          "title": "配置",
+          "path": "application/configuration",
+          "purpose": "管理配置来源、校验、默认值与变更。"
+        },
+        {
+          "id": "application/dependency-wiring",
+          "title": "依赖组织",
+          "path": "application/dependency-wiring",
+          "purpose": "明确依赖创建、传递与所有权。"
+        },
+        {
+          "id": "application/lifecycle",
+          "title": "启停与资源释放",
+          "path": "application/lifecycle",
+          "purpose": "协调信号、取消、等待与资源关闭。"
+        }
+      ]
+    },
+    {
+      "id": "transport",
+      "title": "请求处理",
+      "modules": [
+        {
+          "id": "transport/http-server",
+          "title": "HTTP 服务",
+          "path": "transport/http-server",
+          "purpose": "建立 HTTP 服务的运行边界。"
+        },
+        {
+          "id": "transport/routing",
+          "title": "路由注册",
+          "path": "transport/routing",
+          "purpose": "组织路由、版本与业务处理入口。"
+        },
+        {
+          "id": "transport/middleware",
+          "title": "中间件",
+          "path": "transport/middleware",
+          "purpose": "组织请求链中的通用处理。"
+        },
+        {
+          "id": "transport/api-contract",
+          "title": "接口契约",
+          "path": "transport/api-contract",
+          "purpose": "约定参数校验、错误响应与接口兼容性。"
+        },
+        {
+          "id": "transport/realtime",
+          "title": "实时通信",
+          "path": "transport/realtime",
+          "purpose": "管理 WebSocket 或 SSE 等长连接。"
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "title": "数据访问",
+      "modules": [
+        {
+          "id": "data/database",
+          "title": "数据库连接",
+          "path": "data/database",
+          "purpose": "管理连接建立、连接池与关闭。"
+        },
+        {
+          "id": "data/persistence",
+          "title": "持久化边界",
+          "path": "data/persistence",
+          "purpose": "组织查询、数据模型与业务之间的依赖。"
+        },
+        {
+          "id": "data/transactions",
+          "title": "事务",
+          "path": "data/transactions",
+          "purpose": "表达事务范围、传播与失败行为。"
+        },
+        {
+          "id": "data/migrations",
+          "title": "数据库迁移",
+          "path": "data/migrations",
+          "purpose": "管理数据库结构随版本演进。"
+        },
+        {
+          "id": "data/cache",
+          "title": "缓存",
+          "path": "data/cache",
+          "purpose": "明确缓存的数据、生命周期与一致性边界。"
+        },
+        {
+          "id": "data/file-storage",
+          "title": "文件与对象存储",
+          "path": "data/file-storage",
+          "purpose": "管理上传、读取与元数据的一致性。"
+        }
+      ]
+    },
+    {
+      "id": "observability",
+      "title": "可观测性",
+      "modules": [
+        {
+          "id": "observability/logging",
+          "title": "日志",
+          "path": "observability/logging",
+          "purpose": "记录应用事件与请求上下文。"
+        },
+        {
+          "id": "observability/metrics",
+          "title": "指标",
+          "path": "observability/metrics",
+          "purpose": "用指标观察服务状态和趋势。"
+        },
+        {
+          "id": "observability/tracing",
+          "title": "链路追踪",
+          "path": "observability/tracing",
+          "purpose": "关联跨调用边界的执行过程。"
+        },
+        {
+          "id": "observability/health",
+          "title": "健康与就绪检查",
+          "path": "observability/health",
+          "purpose": "区分进程存活与接收流量的条件。"
+        }
+      ]
+    },
+    {
+      "id": "background",
+      "title": "后台工作",
+      "modules": [
+        {
+          "id": "background/scheduling",
+          "title": "定时调度",
+          "path": "background/scheduling",
+          "purpose": "管理周期任务的触发与生命周期。"
+        },
+        {
+          "id": "background/jobs",
+          "title": "后台任务与队列",
+          "path": "background/jobs",
+          "purpose": "管理异步任务的提交、执行与恢复。"
+        },
+        {
+          "id": "background/outbound-calls",
+          "title": "外部调用",
+          "path": "background/outbound-calls",
+          "purpose": "管理远程调用的时间与失败预算。"
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "安全与访问控制",
+      "modules": [
+        {
+          "id": "security/authentication",
+          "title": "认证与会话",
+          "path": "security/authentication",
+          "purpose": "识别调用者并管理会话生命周期。"
+        },
+        {
+          "id": "security/authorization",
+          "title": "授权",
+          "path": "security/authorization",
+          "purpose": "判断调用者能否操作具体资源。"
+        },
+        {
+          "id": "security/abuse-protection",
+          "title": "限流与输入边界",
+          "path": "security/abuse-protection",
+          "purpose": "控制请求成本和资源消耗。"
+        },
+        {
+          "id": "security/audit",
+          "title": "审计",
+          "path": "security/audit",
+          "purpose": "保存可追溯的关键操作记录。"
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "title": "工程交付",
+      "modules": [
+        {
+          "id": "delivery/testing",
+          "title": "测试策略",
+          "path": "delivery/testing",
+          "purpose": "验证业务与通用能力的真实行为。"
+        },
+        {
+          "id": "delivery/build-release",
+          "title": "构建与发布",
+          "path": "delivery/build-release",
+          "purpose": "建立可复现的构建与版本标识。"
+        },
+        {
+          "id": "delivery/deployment",
+          "title": "部署与运行",
+          "path": "delivery/deployment",
+          "purpose": "让服务在目标环境中正确运行。"
+        },
+        {
+          "id": "delivery/backup-recovery",
+          "title": "备份与恢复",
+          "path": "delivery/backup-recovery",
+          "purpose": "验证数据能否被完整恢复。"
+        }
+      ]
+    }
+  ]
+}

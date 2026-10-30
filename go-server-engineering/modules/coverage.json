@@ -1,4 +1,747 @@
 {
   "format_version": 1,
-  "records": []
+  "records": [
+    {
+      "sample_id": "answer",
+      "module_id": "application/lifecycle",
+      "status": "analyzed",
+      "source_revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "verified_at": "2026-10-29",
+      "analysis_path": "modules/application/lifecycle/implementations/answer.md",
+      "evidence_urls": [
+        "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/main.go"
+      ],
+      "lab_paths": [],
+      "scope": "v2.0.3 常规 run 与相关源码；静态分析",
+      "note": "启动、失败、HTTP 退出、清理与后台边界的第一轮静态分析。"
+    },
+    {
+      "sample_id": "answer",
+      "module_id": "application/bootstrap",
+      "status": "located",
+      "source_revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "verified_at": "2026-10-29",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/wire_gen.go"
+      ],
+      "lab_paths": [],
+      "scope": "v2.0.3 常规 run 与相关源码；静态分析",
+      "note": "已定位装配，独立模块分析待开展。"
+    },
+    {
+      "sample_id": "answer",
+      "module_id": "application/configuration",
+      "status": "located",
+      "source_revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "verified_at": "2026-10-29",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/conf/conf.go"
+      ],
+      "lab_paths": [],
+      "scope": "v2.0.3 常规 run 与相关源码；静态分析",
+      "note": "已定位入口，覆盖优先级与校验待研究。"
+    },
+    {
+      "sample_id": "answer",
+      "module_id": "transport/http-server",
+      "status": "located",
+      "source_revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "verified_at": "2026-10-29",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/main.go"
+      ],
+      "lab_paths": [],
+      "scope": "v2.0.3 常规 run 与相关源码；静态分析",
+      "note": "已追踪 HTTP 包装与底层生命周期，独立模块待分析。"
+    },
+    {
+      "sample_id": "answer",
+      "module_id": "transport/routing",
+      "status": "located",
+      "source_revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "verified_at": "2026-10-29",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/server/http.go"
+      ],
+      "lab_paths": [],
+      "scope": "v2.0.3 常规 run 与相关源码；静态分析",
+      "note": "已定位路由装配，完整处理链待分析。"
+    },
+    {
+      "sample_id": "answer",
+      "module_id": "data/database",
+      "status": "located",
+      "source_revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "verified_at": "2026-10-29",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/data/data.go"
+      ],
+      "lab_paths": [],
+      "scope": "v2.0.3 常规 run 与相关源码；静态分析",
+      "note": "已定位创建、Ping、关闭，连接池专题待开展。"
+    },
+    {
+      "sample_id": "answer",
+      "module_id": "background/scheduling",
+      "status": "located",
+      "source_revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "verified_at": "2026-10-29",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/cron/cron.go"
+      ],
+      "lab_paths": [],
+      "scope": "v2.0.3 常规 run 与相关源码；静态分析",
+      "note": "已定位调度与主退出接线边界，未实测。"
+    },
+    {
+      "sample_id": "answer",
+      "module_id": "background/jobs",
+      "status": "located",
+      "source_revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "verified_at": "2026-10-29",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/queue/queue.go"
+      ],
+      "lab_paths": [],
+      "scope": "v2.0.3 常规 run 与相关源码；静态分析",
+      "note": "已定位队列与关闭方法，未运行测试。"
+    },
+    {
+      "sample_id": "answer",
+      "module_id": "observability/health",
+      "status": "located",
+      "source_revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "verified_at": "2026-10-29",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/server/http.go"
+      ],
+      "lab_paths": [],
+      "scope": "v2.0.3 常规 run 与相关源码；静态分析",
+      "note": "已定位 healthz 和仓库探针，未验证部署。"
+    },
+    {
+      "sample_id": "memos",
+      "module_id": "application/lifecycle",
+      "status": "analyzed",
+      "source_revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "verified_at": "2026-10-30",
+      "analysis_path": "modules/application/lifecycle/implementations/memos.md",
+      "evidence_urls": [
+        "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/cmd/memos/main.go"
+      ],
+      "lab_paths": [],
+      "scope": "已读固定 SHA 文件；部分源码快照；未运行",
+      "note": "生命周期第一轮静态分析。"
+    },
+    {
+      "sample_id": "memos",
+      "module_id": "application/bootstrap",
+      "status": "located",
+      "source_revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/cmd/memos/main.go"
+      ],
+      "lab_paths": [],
+      "scope": "已读固定 SHA 文件；部分源码快照；未运行",
+      "note": "作为生命周期证据定位；独立专题待研究。"
+    },
+    {
+      "sample_id": "memos",
+      "module_id": "application/configuration",
+      "status": "located",
+      "source_revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/cmd/memos/main.go"
+      ],
+      "lab_paths": [],
+      "scope": "已读固定 SHA 文件；部分源码快照；未运行",
+      "note": "作为生命周期证据定位；独立专题待研究。"
+    },
+    {
+      "sample_id": "memos",
+      "module_id": "transport/http-server",
+      "status": "located",
+      "source_revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/server.go"
+      ],
+      "lab_paths": [],
+      "scope": "已读固定 SHA 文件；部分源码快照；未运行",
+      "note": "作为生命周期证据定位；独立专题待研究。"
+    },
+    {
+      "sample_id": "memos",
+      "module_id": "transport/routing",
+      "status": "located",
+      "source_revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/api/v1/v1.go"
+      ],
+      "lab_paths": [],
+      "scope": "已读固定 SHA 文件；部分源码快照；未运行",
+      "note": "作为生命周期证据定位；独立专题待研究。"
+    },
+    {
+      "sample_id": "memos",
+      "module_id": "transport/realtime",
+      "status": "located",
+      "source_revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/api/v1/sse_hub.go"
+      ],
+      "lab_paths": [],
+      "scope": "已读固定 SHA 文件；部分源码快照；未运行",
+      "note": "作为生命周期证据定位；独立专题待研究。"
+    },
+    {
+      "sample_id": "memos",
+      "module_id": "data/database",
+      "status": "located",
+      "source_revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/store/store.go"
+      ],
+      "lab_paths": [],
+      "scope": "已读固定 SHA 文件；部分源码快照；未运行",
+      "note": "作为生命周期证据定位；独立专题待研究。"
+    },
+    {
+      "sample_id": "memos",
+      "module_id": "data/migrations",
+      "status": "located",
+      "source_revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/store/migrator.go"
+      ],
+      "lab_paths": [],
+      "scope": "已读固定 SHA 文件；部分源码快照；未运行",
+      "note": "作为生命周期证据定位；独立专题待研究。"
+    },
+    {
+      "sample_id": "memos",
+      "module_id": "observability/health",
+      "status": "located",
+      "source_revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/server.go"
+      ],
+      "lab_paths": [],
+      "scope": "已读固定 SHA 文件；部分源码快照；未运行",
+      "note": "作为生命周期证据定位；独立专题待研究。"
+    },
+    {
+      "sample_id": "navidrome",
+      "module_id": "application/lifecycle",
+      "status": "analyzed",
+      "source_revision": "101145742f4762164202cb4858c9126258bdc463",
+      "verified_at": "2026-10-30",
+      "analysis_path": "modules/application/lifecycle/implementations/navidrome.md",
+      "evidence_urls": [
+        "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/root.go"
+      ],
+      "lab_paths": [],
+      "scope": "普通命令、HTTP、调度、扫描控制/Watcher、封面 Worker、DB 初始化；服务管理回调为补充。不覆盖所有插件、存储和转码进程。",
+      "note": "第一轮静态分析。"
+    },
+    {
+      "sample_id": "navidrome",
+      "module_id": "application/bootstrap",
+      "status": "located",
+      "source_revision": "101145742f4762164202cb4858c9126258bdc463",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/root.go"
+      ],
+      "lab_paths": [],
+      "scope": "普通命令、HTTP、调度、扫描控制/Watcher、封面 Worker、DB 初始化；服务管理回调为补充。不覆盖所有插件、存储和转码进程。",
+      "note": "仅作为生命周期证据定位，独立模块待研究。"
+    },
+    {
+      "sample_id": "navidrome",
+      "module_id": "transport/http-server",
+      "status": "located",
+      "source_revision": "101145742f4762164202cb4858c9126258bdc463",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/server/server.go"
+      ],
+      "lab_paths": [],
+      "scope": "普通命令、HTTP、调度、扫描控制/Watcher、封面 Worker、DB 初始化；服务管理回调为补充。不覆盖所有插件、存储和转码进程。",
+      "note": "仅作为生命周期证据定位，独立模块待研究。"
+    },
+    {
+      "sample_id": "navidrome",
+      "module_id": "data/database",
+      "status": "located",
+      "source_revision": "101145742f4762164202cb4858c9126258bdc463",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/db/db.go"
+      ],
+      "lab_paths": [],
+      "scope": "普通命令、HTTP、调度、扫描控制/Watcher、封面 Worker、DB 初始化；服务管理回调为补充。不覆盖所有插件、存储和转码进程。",
+      "note": "仅作为生命周期证据定位，独立模块待研究。"
+    },
+    {
+      "sample_id": "navidrome",
+      "module_id": "data/migrations",
+      "status": "located",
+      "source_revision": "101145742f4762164202cb4858c9126258bdc463",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/db/db.go"
+      ],
+      "lab_paths": [],
+      "scope": "普通命令、HTTP、调度、扫描控制/Watcher、封面 Worker、DB 初始化；服务管理回调为补充。不覆盖所有插件、存储和转码进程。",
+      "note": "仅作为生命周期证据定位，独立模块待研究。"
+    },
+    {
+      "sample_id": "navidrome",
+      "module_id": "background/scheduling",
+      "status": "located",
+      "source_revision": "101145742f4762164202cb4858c9126258bdc463",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/scheduler/scheduler.go"
+      ],
+      "lab_paths": [],
+      "scope": "普通命令、HTTP、调度、扫描控制/Watcher、封面 Worker、DB 初始化；服务管理回调为补充。不覆盖所有插件、存储和转码进程。",
+      "note": "仅作为生命周期证据定位，独立模块待研究。"
+    },
+    {
+      "sample_id": "navidrome",
+      "module_id": "background/jobs",
+      "status": "located",
+      "source_revision": "101145742f4762164202cb4858c9126258bdc463",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/core/artwork/worker.go"
+      ],
+      "lab_paths": [],
+      "scope": "普通命令、HTTP、调度、扫描控制/Watcher、封面 Worker、DB 初始化；服务管理回调为补充。不覆盖所有插件、存储和转码进程。",
+      "note": "仅作为生命周期证据定位，独立模块待研究。"
+    },
+    {
+      "sample_id": "navidrome",
+      "module_id": "observability/health",
+      "status": "located",
+      "source_revision": "101145742f4762164202cb4858c9126258bdc463",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/server/server.go"
+      ],
+      "lab_paths": [],
+      "scope": "普通命令、HTTP、调度、扫描控制/Watcher、封面 Worker、DB 初始化；服务管理回调为补充。不覆盖所有插件、存储和转码进程。",
+      "note": "仅作为生命周期证据定位，独立模块待研究。"
+    },
+    {
+      "sample_id": "navidrome",
+      "module_id": "delivery/deployment",
+      "status": "located",
+      "source_revision": "101145742f4762164202cb4858c9126258bdc463",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/svc.go"
+      ],
+      "lab_paths": [],
+      "scope": "普通命令、HTTP、调度、扫描控制/Watcher、封面 Worker、DB 初始化；服务管理回调为补充。不覆盖所有插件、存储和转码进程。",
+      "note": "仅作为生命周期证据定位，独立模块待研究。"
+    },
+    {
+      "sample_id": "gotify",
+      "module_id": "application/lifecycle",
+      "status": "analyzed",
+      "source_revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "verified_at": "2026-10-30",
+      "analysis_path": "modules/application/lifecycle/implementations/gotify.md",
+      "evidence_urls": [
+        "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/app.go"
+      ],
+      "lab_paths": [],
+      "scope": "常规 serve：配置与数据库初始化、Gin 装配、HTTP/TLS 监听、WebSocket 与数据库清理；不完整审计插件、OIDC 与部署信号链。",
+      "note": "第一轮静态分析，未运行。"
+    },
+    {
+      "sample_id": "gotify",
+      "module_id": "application/bootstrap",
+      "status": "located",
+      "source_revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/app.go"
+      ],
+      "lab_paths": [],
+      "scope": "常规 serve：配置与数据库初始化、Gin 装配、HTTP/TLS 监听、WebSocket 与数据库清理；不完整审计插件、OIDC 与部署信号链。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gotify",
+      "module_id": "transport/http-server",
+      "status": "located",
+      "source_revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/runner/runner.go"
+      ],
+      "lab_paths": [],
+      "scope": "常规 serve：配置与数据库初始化、Gin 装配、HTTP/TLS 监听、WebSocket 与数据库清理；不完整审计插件、OIDC 与部署信号链。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gotify",
+      "module_id": "transport/routing",
+      "status": "located",
+      "source_revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/router/router.go"
+      ],
+      "lab_paths": [],
+      "scope": "常规 serve：配置与数据库初始化、Gin 装配、HTTP/TLS 监听、WebSocket 与数据库清理；不完整审计插件、OIDC 与部署信号链。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gotify",
+      "module_id": "transport/realtime",
+      "status": "located",
+      "source_revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/api/stream/stream.go"
+      ],
+      "lab_paths": [],
+      "scope": "常规 serve：配置与数据库初始化、Gin 装配、HTTP/TLS 监听、WebSocket 与数据库清理；不完整审计插件、OIDC 与部署信号链。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gotify",
+      "module_id": "data/database",
+      "status": "located",
+      "source_revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/database/database.go"
+      ],
+      "lab_paths": [],
+      "scope": "常规 serve：配置与数据库初始化、Gin 装配、HTTP/TLS 监听、WebSocket 与数据库清理；不完整审计插件、OIDC 与部署信号链。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gotify",
+      "module_id": "data/migrations",
+      "status": "located",
+      "source_revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/database/database.go"
+      ],
+      "lab_paths": [],
+      "scope": "常规 serve：配置与数据库初始化、Gin 装配、HTTP/TLS 监听、WebSocket 与数据库清理；不完整审计插件、OIDC 与部署信号链。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gotify",
+      "module_id": "background/scheduling",
+      "status": "located",
+      "source_revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/router/router.go"
+      ],
+      "lab_paths": [],
+      "scope": "常规 serve：配置与数据库初始化、Gin 装配、HTTP/TLS 监听、WebSocket 与数据库清理；不完整审计插件、OIDC 与部署信号链。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gotify",
+      "module_id": "observability/health",
+      "status": "located",
+      "source_revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/api/health.go"
+      ],
+      "lab_paths": [],
+      "scope": "常规 serve：配置与数据库初始化、Gin 装配、HTTP/TLS 监听、WebSocket 与数据库清理；不完整审计插件、OIDC 与部署信号链。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gitea",
+      "module_id": "application/lifecycle",
+      "status": "analyzed",
+      "source_revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "verified_at": "2026-10-30",
+      "analysis_path": "modules/application/lifecycle/implementations/gitea.md",
+      "evidence_urls": [
+        "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager.go"
+      ],
+      "lab_paths": [],
+      "scope": "已安装实例 web 的 HTTP 主线、分阶段 Manager、连接包装、Cron 与 DB 初始化。Unix 信号为主、Windows 服务为补充；不完整审计 SSH、Actions、队列、插件与热重启。",
+      "note": "第一轮静态分析，未运行。"
+    },
+    {
+      "sample_id": "gitea",
+      "module_id": "application/bootstrap",
+      "status": "located",
+      "source_revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/routers/init.go"
+      ],
+      "lab_paths": [],
+      "scope": "已安装实例 web 的 HTTP 主线、分阶段 Manager、连接包装、Cron 与 DB 初始化。Unix 信号为主、Windows 服务为补充；不完整审计 SSH、Actions、队列、插件与热重启。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gitea",
+      "module_id": "transport/http-server",
+      "status": "located",
+      "source_revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/server_http.go"
+      ],
+      "lab_paths": [],
+      "scope": "已安装实例 web 的 HTTP 主线、分阶段 Manager、连接包装、Cron 与 DB 初始化。Unix 信号为主、Windows 服务为补充；不完整审计 SSH、Actions、队列、插件与热重启。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gitea",
+      "module_id": "transport/routing",
+      "status": "located",
+      "source_revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/routers/init.go"
+      ],
+      "lab_paths": [],
+      "scope": "已安装实例 web 的 HTTP 主线、分阶段 Manager、连接包装、Cron 与 DB 初始化。Unix 信号为主、Windows 服务为补充；不完整审计 SSH、Actions、队列、插件与热重启。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gitea",
+      "module_id": "data/database",
+      "status": "located",
+      "source_revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/models/db/engine_init.go"
+      ],
+      "lab_paths": [],
+      "scope": "已安装实例 web 的 HTTP 主线、分阶段 Manager、连接包装、Cron 与 DB 初始化。Unix 信号为主、Windows 服务为补充；不完整审计 SSH、Actions、队列、插件与热重启。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gitea",
+      "module_id": "data/migrations",
+      "status": "located",
+      "source_revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/routers/common/db.go"
+      ],
+      "lab_paths": [],
+      "scope": "已安装实例 web 的 HTTP 主线、分阶段 Manager、连接包装、Cron 与 DB 初始化。Unix 信号为主、Windows 服务为补充；不完整审计 SSH、Actions、队列、插件与热重启。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gitea",
+      "module_id": "background/scheduling",
+      "status": "located",
+      "source_revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/services/cron/cron.go"
+      ],
+      "lab_paths": [],
+      "scope": "已安装实例 web 的 HTTP 主线、分阶段 Manager、连接包装、Cron 与 DB 初始化。Unix 信号为主、Windows 服务为补充；不完整审计 SSH、Actions、队列、插件与热重启。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gitea",
+      "module_id": "background/jobs",
+      "status": "located",
+      "source_revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/services/cron/tasks.go"
+      ],
+      "lab_paths": [],
+      "scope": "已安装实例 web 的 HTTP 主线、分阶段 Manager、连接包装、Cron 与 DB 初始化。Unix 信号为主、Windows 服务为补充；不完整审计 SSH、Actions、队列、插件与热重启。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "gitea",
+      "module_id": "delivery/deployment",
+      "status": "located",
+      "source_revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager_unix.go"
+      ],
+      "lab_paths": [],
+      "scope": "已安装实例 web 的 HTTP 主线、分阶段 Manager、连接包装、Cron 与 DB 初始化。Unix 信号为主、Windows 服务为补充；不完整审计 SSH、Actions、队列、插件与热重启。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "pocketbase",
+      "module_id": "application/lifecycle",
+      "status": "analyzed",
+      "source_revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "verified_at": "2026-10-30",
+      "analysis_path": "modules/application/lifecycle/implementations/pocketbase.md",
+      "evidence_urls": [
+        "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/pocketbase.go"
+      ],
+      "lab_paths": [],
+      "scope": "迁移前 GitHub v0.40.6 历史基线：Go 扩展入口、Bootstrap/Execute、主 HTTP/SSE、事件链、Cron、日志和 DB 清理。不代表新托管仓库当前实现，不完整审计 JS 插件、备份和所有异步任务。",
+      "note": "第一轮静态分析，未运行。"
+    },
+    {
+      "sample_id": "pocketbase",
+      "module_id": "application/bootstrap",
+      "status": "located",
+      "source_revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/core/base.go"
+      ],
+      "lab_paths": [],
+      "scope": "迁移前 GitHub v0.40.6 历史基线：Go 扩展入口、Bootstrap/Execute、主 HTTP/SSE、事件链、Cron、日志和 DB 清理。不代表新托管仓库当前实现，不完整审计 JS 插件、备份和所有异步任务。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "pocketbase",
+      "module_id": "transport/http-server",
+      "status": "located",
+      "source_revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/serve.go"
+      ],
+      "lab_paths": [],
+      "scope": "迁移前 GitHub v0.40.6 历史基线：Go 扩展入口、Bootstrap/Execute、主 HTTP/SSE、事件链、Cron、日志和 DB 清理。不代表新托管仓库当前实现，不完整审计 JS 插件、备份和所有异步任务。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "pocketbase",
+      "module_id": "transport/routing",
+      "status": "located",
+      "source_revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/serve.go"
+      ],
+      "lab_paths": [],
+      "scope": "迁移前 GitHub v0.40.6 历史基线：Go 扩展入口、Bootstrap/Execute、主 HTTP/SSE、事件链、Cron、日志和 DB 清理。不代表新托管仓库当前实现，不完整审计 JS 插件、备份和所有异步任务。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "pocketbase",
+      "module_id": "transport/realtime",
+      "status": "located",
+      "source_revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/realtime.go"
+      ],
+      "lab_paths": [],
+      "scope": "迁移前 GitHub v0.40.6 历史基线：Go 扩展入口、Bootstrap/Execute、主 HTTP/SSE、事件链、Cron、日志和 DB 清理。不代表新托管仓库当前实现，不完整审计 JS 插件、备份和所有异步任务。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "pocketbase",
+      "module_id": "data/database",
+      "status": "located",
+      "source_revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/core/base.go"
+      ],
+      "lab_paths": [],
+      "scope": "迁移前 GitHub v0.40.6 历史基线：Go 扩展入口、Bootstrap/Execute、主 HTTP/SSE、事件链、Cron、日志和 DB 清理。不代表新托管仓库当前实现，不完整审计 JS 插件、备份和所有异步任务。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "pocketbase",
+      "module_id": "data/migrations",
+      "status": "located",
+      "source_revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/serve.go"
+      ],
+      "lab_paths": [],
+      "scope": "迁移前 GitHub v0.40.6 历史基线：Go 扩展入口、Bootstrap/Execute、主 HTTP/SSE、事件链、Cron、日志和 DB 清理。不代表新托管仓库当前实现，不完整审计 JS 插件、备份和所有异步任务。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    },
+    {
+      "sample_id": "pocketbase",
+      "module_id": "background/scheduling",
+      "status": "located",
+      "source_revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "verified_at": "2026-10-30",
+      "analysis_path": null,
+      "evidence_urls": [
+        "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/tools/cron/cron.go"
+      ],
+      "lab_paths": [],
+      "scope": "迁移前 GitHub v0.40.6 历史基线：Go 扩展入口、Bootstrap/Execute、主 HTTP/SSE、事件链、Cron、日志和 DB 清理。不代表新托管仓库当前实现，不完整审计 JS 插件、备份和所有异步任务。",
+      "note": "仅作为生命周期证据定位；独立模块待研究。"
+    }
+  ]
 }

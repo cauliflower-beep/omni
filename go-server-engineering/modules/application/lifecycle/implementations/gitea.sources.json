@@ -1,0 +1,370 @@
+{
+  "format_version": 1,
+  "sample_id": "gitea",
+  "module_id": "application/lifecycle",
+  "source_ref": "v28.2.0",
+  "source_revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+  "verified_at": "2026-10-30",
+  "source_selection": "固定 release 标签对应 SHA；不是跟踪分支",
+  "repository_url": "https://github.com/go-gitea/gitea",
+  "analysis_mode": "static_source_review",
+  "runtime_validated": false,
+  "scope": "已安装实例 web 的 HTTP 主线、分阶段 Manager、连接包装、Cron 与 DB 初始化。Unix 信号为主、Windows 服务为补充；不完整审计 SSH、Actions、队列、插件与热重启。",
+  "source_acquisition": "GitHub connector 读取固定 SHA 文件与目录树；本地为部分源码快照，不是完整 checkout",
+  "evidence": [
+    {
+      "id": "GT_MAIN",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "main.go",
+      "symbol": "func main()",
+      "start_line": 40,
+      "end_line": 50,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/main.go#L40-L50",
+      "cached_file_sha256": "e532556545295495036258792cd76b124bdc97aea991926cfff38c92bf046eb2"
+    },
+    {
+      "id": "GT_WEB",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "cmd/web.go",
+      "symbol": "func runWeb(",
+      "start_line": 261,
+      "end_line": 298,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/cmd/web.go#L261-L298",
+      "cached_file_sha256": "647aefaafa821efd632d33a1524de6667ead7d6f1ae8ca06b323d22857f18830"
+    },
+    {
+      "id": "GT_INSTALLED",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "cmd/web.go",
+      "symbol": "func serveInstalled(",
+      "start_line": 168,
+      "end_line": 242,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/cmd/web.go#L168-L242",
+      "cached_file_sha256": "647aefaafa821efd632d33a1524de6667ead7d6f1ae8ca06b323d22857f18830"
+    },
+    {
+      "id": "GT_LISTEN",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "cmd/web.go",
+      "symbol": "func listen(",
+      "start_line": 332,
+      "end_line": 392,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/cmd/web.go#L332-L392",
+      "cached_file_sha256": "647aefaafa821efd632d33a1524de6667ead7d6f1ae8ca06b323d22857f18830"
+    },
+    {
+      "id": "GT_INIT",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "routers/init.go",
+      "symbol": "func InitWebInstalled(",
+      "start_line": 115,
+      "end_line": 174,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/routers/init.go#L115-L174",
+      "cached_file_sha256": "36b17e5d5796f790a9f8e8ad0ef4b1efe59a0b154be744f00277d81fbbab520c"
+    },
+    {
+      "id": "GT_DB",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "routers/common/db.go",
+      "symbol": "func InitDBEngine(",
+      "start_line": 21,
+      "end_line": 41,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/routers/common/db.go#L21-L41",
+      "cached_file_sha256": "8f8b844e1091ec1188907715502d64aab86a1206a6a687091d9be8bb1588a6c0"
+    },
+    {
+      "id": "GT_ENGINE",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "models/db/engine_init.go",
+      "symbol": "func InitEngineWithMigration(",
+      "start_line": 102,
+      "end_line": 138,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/models/db/engine_init.go#L102-L138",
+      "cached_file_sha256": "713b7c385d2310179fc204f34fa4fcbd80752cec81145434161ae822bbf4ba5e"
+    },
+    {
+      "id": "GT_UNSET",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "models/db/engine_init.go",
+      "symbol": "// UnsetDefaultEngine",
+      "start_line": 86,
+      "end_line": 95,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/models/db/engine_init.go#L86-L95",
+      "cached_file_sha256": "713b7c385d2310179fc204f34fa4fcbd80752cec81145434161ae822bbf4ba5e"
+    },
+    {
+      "id": "GT_MANAGER",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/manager_common.go",
+      "symbol": "func (g *Manager) prepare(",
+      "start_line": 64,
+      "end_line": 78,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager_common.go#L64-L78",
+      "cached_file_sha256": "bb69a61e85338ee390a643ea613655a75aa57a355b579a05196dbc4f51ee0df2"
+    },
+    {
+      "id": "GT_SHUTDOWN",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/manager.go",
+      "symbol": "func (g *Manager) doShutdown(",
+      "start_line": 124,
+      "end_line": 152,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager.go#L124-L152",
+      "cached_file_sha256": "61d4bfc9c9acb93d6d327abff8909bb92ada5663ddeb037854f079dce3d17c90"
+    },
+    {
+      "id": "GT_HAMMER",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/manager.go",
+      "symbol": "func (g *Manager) doHammerTime(",
+      "start_line": 154,
+      "end_line": 166,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager.go#L154-L166",
+      "cached_file_sha256": "61d4bfc9c9acb93d6d327abff8909bb92ada5663ddeb037854f079dce3d17c90"
+    },
+    {
+      "id": "GT_TERMINATE",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/manager.go",
+      "symbol": "func (g *Manager) doTerminate(",
+      "start_line": 168,
+      "end_line": 186,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager.go#L168-L186",
+      "cached_file_sha256": "61d4bfc9c9acb93d6d327abff8909bb92ada5663ddeb037854f079dce3d17c90"
+    },
+    {
+      "id": "GT_RUN",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/manager.go",
+      "symbol": "func (g *Manager) RunWithShutdownContext(",
+      "start_line": 79,
+      "end_line": 85,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager.go#L79-L85",
+      "cached_file_sha256": "61d4bfc9c9acb93d6d327abff8909bb92ada5663ddeb037854f079dce3d17c90"
+    },
+    {
+      "id": "GT_CALLBACK",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/manager.go",
+      "symbol": "func (g *Manager) RunAtShutdown(",
+      "start_line": 105,
+      "end_line": 122,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager.go#L105-L122",
+      "cached_file_sha256": "61d4bfc9c9acb93d6d327abff8909bb92ada5663ddeb037854f079dce3d17c90"
+    },
+    {
+      "id": "GT_FINAL",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/manager.go",
+      "symbol": "func (g *Manager) RunAtTerminate(",
+      "start_line": 88,
+      "end_line": 102,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager.go#L88-L102",
+      "cached_file_sha256": "61d4bfc9c9acb93d6d327abff8909bb92ada5663ddeb037854f079dce3d17c90"
+    },
+    {
+      "id": "GT_UNIX",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/manager_unix.go",
+      "symbol": "func (g *Manager) handleSignals(",
+      "start_line": 100,
+      "end_line": 159,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager_unix.go#L100-L159",
+      "cached_file_sha256": "ae9d05792cc56eda3675f4c583b5341024ea3f5f0a557336974065a5b0e8e57c"
+    },
+    {
+      "id": "GT_READY",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/manager_unix.go",
+      "symbol": "func (g *Manager) start(",
+      "start_line": 46,
+      "end_line": 98,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager_unix.go#L46-L98",
+      "cached_file_sha256": "ae9d05792cc56eda3675f4c583b5341024ea3f5f0a557336974065a5b0e8e57c"
+    },
+    {
+      "id": "GT_NET",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/net_unix.go",
+      "symbol": "func DefaultGetListener(",
+      "start_line": 145,
+      "end_line": 164,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/net_unix.go#L145-L164",
+      "cached_file_sha256": "8da7d23a6600ee5e20c54f1fd02046d8775c5818df871a746c849389896101b8"
+    },
+    {
+      "id": "GT_HTTP",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/server_http.go",
+      "symbol": "func newHTTPServer(",
+      "start_line": 14,
+      "end_line": 30,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/server_http.go#L14-L30",
+      "cached_file_sha256": "dd93ba3026f67a608650614916a3a4a4f29896e198ac51e4bf52674168fa28e3"
+    },
+    {
+      "id": "GT_SRVLISTEN",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/server.go",
+      "symbol": "func (srv *Server) ListenAndServe(",
+      "start_line": 73,
+      "end_line": 98,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/server.go#L73-L98",
+      "cached_file_sha256": "df51f6c583c28a1ebec720e4d1d4859fb791cdd052236da469183d9df10f6a90"
+    },
+    {
+      "id": "GT_SERVE",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/server.go",
+      "symbol": "func (srv *Server) Serve(",
+      "start_line": 149,
+      "end_line": 163,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/server.go#L149-L163",
+      "cached_file_sha256": "df51f6c583c28a1ebec720e4d1d4859fb791cdd052236da469183d9df10f6a90"
+    },
+    {
+      "id": "GT_CONN",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/server.go",
+      "symbol": "func (srv *Server) closeAllConnections(",
+      "start_line": 211,
+      "end_line": 219,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/server.go#L211-L219",
+      "cached_file_sha256": "df51f6c583c28a1ebec720e4d1d4859fb791cdd052236da469183d9df10f6a90"
+    },
+    {
+      "id": "GT_STOP",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/server_hooks.go",
+      "symbol": "func (srv *Server) doShutdown(",
+      "start_line": 30,
+      "end_line": 47,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/server_hooks.go#L30-L47",
+      "cached_file_sha256": "9e08230cc547941706c8279389f4d932036ca54c9e56c6f0cd8c5cf5253f563d"
+    },
+    {
+      "id": "GT_CRON",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "services/cron/cron.go",
+      "symbol": "func Init(",
+      "start_line": 33,
+      "end_line": 59,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/services/cron/cron.go#L33-L59",
+      "cached_file_sha256": "457dd421af9a5994dec9a05aa77682c656a1ae8824a0415110daea459a12cd51"
+    },
+    {
+      "id": "GT_TASK",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "services/cron/tasks.go",
+      "symbol": "func (t *Task) RunWithUser(",
+      "start_line": 80,
+      "end_line": 157,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/services/cron/tasks.go#L80-L157",
+      "cached_file_sha256": "326646983ee20702afd35755960b889957df0f9c9c2a0b43d3441b1484b5ccef"
+    },
+    {
+      "id": "GT_SETTINGS",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/setting/server.go",
+      "symbol": "GracefulHammerTime = sec.Key(\"GRACEFUL_HAMMER_TIME\").MustDuration",
+      "start_line": 245,
+      "end_line": 246,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/setting/server.go#L245-L246",
+      "cached_file_sha256": "bfe8e0619a9477d8a4962cb2769de5b5820c89622eb0aa468c3c75132ed7e965"
+    },
+    {
+      "id": "GT_WINDOWS",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "modules/graceful/manager_windows.go",
+      "symbol": "func (g *Manager) Execute(",
+      "start_line": 60,
+      "end_line": 147,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/modules/graceful/manager_windows.go#L60-L147",
+      "cached_file_sha256": "d3300774decf9de430fdc5bcf2e7f66940be7c96a087bb7b36a40df7e2aece8f"
+    },
+    {
+      "id": "GT_MOD",
+      "repository": "go-gitea/gitea",
+      "revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "path": "go.mod",
+      "symbol": "module ",
+      "start_line": 1,
+      "end_line": 269,
+      "url": "https://github.com/go-gitea/gitea/blob/829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1/go.mod#L1-L269",
+      "cached_file_sha256": "fe4740f38deea7c45266a46d97344d2f53dfecd86447b4cef46744b0d732d99e"
+    }
+  ],
+  "cache_root": ".cache/repos/gitea-evidence",
+  "cached_paths": [
+    "modules/graceful/server_http.go",
+    "cmd/web_graceful.go",
+    "modules/graceful/server_hooks.go",
+    "modules/graceful/manager_common.go",
+    "modules/graceful/manager.go",
+    "cmd/web.go",
+    "services/cron/cron.go",
+    "go.mod",
+    "routers/init.go",
+    "modules/graceful/context.go",
+    "modules/graceful/manager_unix.go",
+    "modules/graceful/server.go",
+    "modules/setting/server.go",
+    "modules/graceful/manager_windows.go",
+    "routers/common/db.go",
+    "services/cron/tasks.go",
+    "models/db/engine_init.go",
+    "models/db/engine.go",
+    "models/db/context.go",
+    "modules/graceful/net_unix.go",
+    "main.go"
+  ],
+  "dependency_baselines": [
+    {
+      "module": "github.com/go-co-op/gocron/v2",
+      "version": "v2.22.0"
+    },
+    {
+      "module": "modernc.org/sqlite",
+      "version": "v1.59.0"
+    },
+    {
+      "module": "xorm.io/xorm",
+      "version": "v1.4.3"
+    }
+  ],
+  "go_directive": "1.27",
+  "checks_not_run": [
+    "构建与上游测试",
+    "监听失败与运行故障注入",
+    "信号、超时与连接退出",
+    "后台任务结束与依赖释放顺序",
+    "实际平台进程控制与崩溃恢复"
+  ]
+}

@@ -1,0 +1,420 @@
+{
+  "format_version": 1,
+  "sample_id": "answer",
+  "module_id": "application/lifecycle",
+  "source_ref": "v2.0.3",
+  "source_revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+  "verified_at": "2026-10-29",
+  "analysis_mode": "static_source_review",
+  "runtime_validated": false,
+  "scope": "标准构建、answer run、相关 provider/后台组件、锁定 Pacman 与仓库容器/Helm 配置；不含外部插件与实际部署行为",
+  "dependency_baselines": [
+    {
+      "module": "github.com/segmentfault/pacman",
+      "version": "v1.0.5-0.20230822083413-c0075a2d401f",
+      "revision": "c0075a2d401f2ffd8558ff6257a10381da46a4c2"
+    },
+    {
+      "module": "github.com/segmentfault/pacman/contrib/server/http",
+      "version": "v0.0.0-20230822083413-c0075a2d401f",
+      "revision": "c0075a2d401f2ffd8558ff6257a10381da46a4c2"
+    },
+    {
+      "module": "github.com/google/wire",
+      "version": "v0.5.0",
+      "role": "构建期生成；读取实际生成代码"
+    },
+    {
+      "module": "github.com/gin-gonic/gin",
+      "version": "v1.10.0",
+      "role": "请求处理"
+    },
+    {
+      "module": "github.com/spf13/cobra",
+      "version": "v1.8.1",
+      "role": "命令入口"
+    },
+    {
+      "module": "github.com/robfig/cron/v3",
+      "version": "v3.0.1",
+      "revision": "ccba498c397bb90a9c84945bbb0f7af2d72b6309"
+    },
+    {
+      "module": "xorm.io/xorm",
+      "version": "v1.3.2",
+      "role": "数据库；未深入审计库内部失败清理"
+    }
+  ],
+  "standard_library_reference": {
+    "tag": "go1.25.0",
+    "revision": "6e676ab2b809d46623acb5988248d95d1eb7939c",
+    "note": "最低 Go 版本对应的语义参考，实际构建工具链未核验"
+  },
+  "evidence": [
+    {
+      "id": "A_BUILD",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "Makefile",
+      "start_line": 3,
+      "end_line": 22,
+      "symbol": "DIR_SRC / build",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/Makefile#L3-L22"
+    },
+    {
+      "id": "A_ENTRY",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "cmd/answer/main.go",
+      "start_line": 35,
+      "end_line": 37,
+      "symbol": "main",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/answer/main.go#L35-L37"
+    },
+    {
+      "id": "A_MAIN",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "cmd/main.go",
+      "start_line": 69,
+      "end_line": 73,
+      "symbol": "Main",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/main.go#L69-L73"
+    },
+    {
+      "id": "A_COMMAND",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "cmd/command.go",
+      "start_line": 90,
+      "end_line": 113,
+      "symbol": "rootCmd / runCmd",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/command.go#L90-L113"
+    },
+    {
+      "id": "A_ENTRYPOINT",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "script/entrypoint.sh",
+      "start_line": 19,
+      "end_line": 21,
+      "symbol": "container commands",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/script/entrypoint.sh#L19-L21"
+    },
+    {
+      "id": "A_RUN",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "cmd/main.go",
+      "start_line": 75,
+      "end_line": 95,
+      "symbol": "runApp",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/main.go#L75-L95"
+    },
+    {
+      "id": "A_CONF",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/base/conf/conf.go",
+      "start_line": 98,
+      "end_line": 114,
+      "symbol": "ReadConfig",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/conf/conf.go#L98-L114"
+    },
+    {
+      "id": "A_WIRE_SPEC",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "cmd/wire.go",
+      "start_line": 1,
+      "end_line": 69,
+      "symbol": "wireinject / initApplication",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/wire.go#L1-L69"
+    },
+    {
+      "id": "A_WIRE_GEN",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "cmd/wire_gen.go",
+      "start_line": 128,
+      "end_line": 320,
+      "symbol": "initApplication",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/wire_gen.go#L128-L320"
+    },
+    {
+      "id": "A_WIRE_HEAD",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "cmd/wire_gen.go",
+      "start_line": 131,
+      "end_line": 149,
+      "symbol": "initial providers",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/wire_gen.go#L131-L149"
+    },
+    {
+      "id": "A_WIRE_QUEUES",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "cmd/wire_gen.go",
+      "start_line": 183,
+      "end_line": 206,
+      "symbol": "queue providers",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/wire_gen.go#L183-L206"
+    },
+    {
+      "id": "A_WIRE_TAIL",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "cmd/wire_gen.go",
+      "start_line": 313,
+      "end_line": 320,
+      "symbol": "HTTP / app / cleanup",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/wire_gen.go#L313-L320"
+    },
+    {
+      "id": "A_DB",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/base/data/data.go",
+      "start_line": 56,
+      "end_line": 95,
+      "symbol": "NewDB",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/data/data.go#L56-L95"
+    },
+    {
+      "id": "A_DATA_CLEANUP",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/base/data/data.go",
+      "start_line": 46,
+      "end_line": 53,
+      "symbol": "NewData",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/data/data.go#L46-L53"
+    },
+    {
+      "id": "A_CACHE",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/base/data/data.go",
+      "start_line": 98,
+      "end_line": 138,
+      "symbol": "NewCache",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/data/data.go#L98-L138"
+    },
+    {
+      "id": "A_HTTP",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/base/server/http.go",
+      "start_line": 36,
+      "end_line": 126,
+      "symbol": "NewHTTPServer",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/server/http.go#L36-L126"
+    },
+    {
+      "id": "A_HEALTH",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/base/server/http.go",
+      "start_line": 63,
+      "end_line": 66,
+      "symbol": "/healthz",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/server/http.go#L63-L66"
+    },
+    {
+      "id": "A_NEW_APP",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "cmd/main.go",
+      "start_line": 97,
+      "end_line": 104,
+      "symbol": "newApplication",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/cmd/main.go#L97-L104"
+    },
+    {
+      "id": "A_CRON",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/base/cron/cron.go",
+      "start_line": 62,
+      "end_line": 119,
+      "symbol": "ScheduledTaskManager.Run",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/cron/cron.go#L62-L119"
+    },
+    {
+      "id": "A_MOD",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "go.mod",
+      "start_line": 20,
+      "end_line": 72,
+      "symbol": "require",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/go.mod#L20-L72"
+    },
+    {
+      "id": "A_QUEUE_NEW",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/base/queue/queue.go",
+      "start_line": 52,
+      "end_line": 61,
+      "symbol": "New",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/queue/queue.go#L52-L61"
+    },
+    {
+      "id": "A_QUEUE_CLOSE",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/base/queue/queue.go",
+      "start_line": 89,
+      "end_line": 128,
+      "symbol": "Close / startWorker / processMessage",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/queue/queue.go#L89-L128"
+    },
+    {
+      "id": "P_DEFAULTS",
+      "repository": "segmentfault/pacman",
+      "revision": "c0075a2d401f2ffd8558ff6257a10381da46a4c2",
+      "path": "pacman.go",
+      "start_line": 28,
+      "end_line": 45,
+      "symbol": "NewApp defaults",
+      "url": "https://github.com/segmentfault/pacman/blob/c0075a2d401f2ffd8558ff6257a10381da46a4c2/pacman.go#L28-L45"
+    },
+    {
+      "id": "P_RUN",
+      "repository": "segmentfault/pacman",
+      "revision": "c0075a2d401f2ffd8558ff6257a10381da46a4c2",
+      "path": "pacman.go",
+      "start_line": 83,
+      "end_line": 110,
+      "symbol": "Application.Run",
+      "url": "https://github.com/segmentfault/pacman/blob/c0075a2d401f2ffd8558ff6257a10381da46a4c2/pacman.go#L83-L110"
+    },
+    {
+      "id": "P_STOP",
+      "repository": "segmentfault/pacman",
+      "revision": "c0075a2d401f2ffd8558ff6257a10381da46a4c2",
+      "path": "pacman.go",
+      "start_line": 113,
+      "end_line": 127,
+      "symbol": "Application.Stop",
+      "url": "https://github.com/segmentfault/pacman/blob/c0075a2d401f2ffd8558ff6257a10381da46a4c2/pacman.go#L113-L127"
+    },
+    {
+      "id": "P_HTTP",
+      "repository": "segmentfault/pacman",
+      "revision": "c0075a2d401f2ffd8558ff6257a10381da46a4c2",
+      "path": "contrib/server/http/http.go",
+      "start_line": 13,
+      "end_line": 46,
+      "symbol": "defaults / NewServer",
+      "url": "https://github.com/segmentfault/pacman/blob/c0075a2d401f2ffd8558ff6257a10381da46a4c2/contrib/server/http/http.go#L13-L46"
+    },
+    {
+      "id": "P_HTTP_START",
+      "repository": "segmentfault/pacman",
+      "revision": "c0075a2d401f2ffd8558ff6257a10381da46a4c2",
+      "path": "contrib/server/http/http.go",
+      "start_line": 49,
+      "end_line": 56,
+      "symbol": "Server.Start",
+      "url": "https://github.com/segmentfault/pacman/blob/c0075a2d401f2ffd8558ff6257a10381da46a4c2/contrib/server/http/http.go#L49-L56"
+    },
+    {
+      "id": "P_HTTP_SHUTDOWN",
+      "repository": "segmentfault/pacman",
+      "revision": "c0075a2d401f2ffd8558ff6257a10381da46a4c2",
+      "path": "contrib/server/http/http.go",
+      "start_line": 58,
+      "end_line": 63,
+      "symbol": "Server.Shutdown",
+      "url": "https://github.com/segmentfault/pacman/blob/c0075a2d401f2ffd8558ff6257a10381da46a4c2/contrib/server/http/http.go#L58-L63"
+    },
+    {
+      "id": "C_STOP",
+      "repository": "robfig/cron",
+      "revision": "ccba498c397bb90a9c84945bbb0f7af2d72b6309",
+      "path": "cron.go",
+      "start_line": 323,
+      "end_line": 340,
+      "symbol": "func (c *Cron) Stop()",
+      "url": "https://github.com/robfig/cron/blob/ccba498c397bb90a9c84945bbb0f7af2d72b6309/cron.go#L323-L340"
+    },
+    {
+      "id": "G_HTTP",
+      "repository": "golang/go",
+      "revision": "6e676ab2b809d46623acb5988248d95d1eb7939c",
+      "path": "src/net/http/server.go",
+      "start_line": 3159,
+      "end_line": 3227,
+      "symbol": "// Shutdown gracefully",
+      "url": "https://github.com/golang/go/blob/6e676ab2b809d46623acb5988248d95d1eb7939c/src/net/http/server.go#L3159-L3227"
+    },
+    {
+      "id": "A_CHART",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "charts/templates/deployment.yaml",
+      "start_line": 50,
+      "end_line": 67,
+      "symbol": "liveness / readiness",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/charts/templates/deployment.yaml#L50-L67"
+    },
+    {
+      "id": "A_SERVER_CONFIG",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/base/server/config.go",
+      "start_line": 19,
+      "end_line": 31,
+      "symbol": "HTTP / UI",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/base/server/config.go#L19-L31"
+    },
+    {
+      "id": "A_VECTOR",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/service/vector_sync/vector_sync.go",
+      "start_line": 49,
+      "end_line": 58,
+      "symbol": "NewService",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/service/vector_sync/vector_sync.go#L49-L58"
+    },
+    {
+      "id": "A_EMAIL",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "internal/service/notification/new_question_email_worker.go",
+      "start_line": 101,
+      "end_line": 189,
+      "symbol": "constructor / Close",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/internal/service/notification/new_question_email_worker.go#L101-L189"
+    },
+    {
+      "id": "A_DOCKER",
+      "repository": "apache/answer",
+      "revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "path": "Dockerfile",
+      "start_line": 49,
+      "end_line": 74,
+      "symbol": "container runtime / ENTRYPOINT",
+      "url": "https://github.com/apache/answer/blob/6744295fa888e0621fc9f9a8ace04f1a4daf8554/Dockerfile#L49-L74"
+    }
+  ],
+  "checks_completed": [
+    "tag 与本地 HEAD 完整 SHA 一致",
+    "读取实际 Wire 装配与清理",
+    "全仓非测试 Go 文件检索 Close/Stop/Shutdown 并核对主入口",
+    "读取锁定 Pacman 与 HTTP 子模块",
+    "缓存被 Git 忽略"
+  ],
+  "checks_not_run": [
+    "构建和启动",
+    "长请求与超时退出",
+    "后台工作停止与积压",
+    "部分构造失败",
+    "容器信号",
+    "异常终止恢复"
+  ]
+}

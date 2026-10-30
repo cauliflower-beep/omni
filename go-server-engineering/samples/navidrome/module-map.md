@@ -1,9 +1,16 @@
-# Navidrome 模块入口映射
+# Navidrome 模块映射
 
-状态：待检索。先固定源码 SHA，再添加真实入口和分析链接。
+基线：v0.64.2 / 101145742f4762164202cb4858c9126258bdc463，核验日期 2026-10-30。
 
-| 模块 | 固定版本源码 / 关键符号 | 实现分析 | 说明 |
-| --- | --- | --- | --- |
-| 待补充 | — | — | 尚未检索，不代表项目没有相关能力 |
+| 模块 | 源码 |
+| --- | --- |
+| 生命周期 | [cmd/root.go](https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/root.go) |
+| HTTP | [server/server.go](https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/server/server.go) |
+| DB 初始化与迁移 | [db/db.go](https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/db/db.go) |
+| 调度 | [scheduler/scheduler.go](https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/scheduler/scheduler.go) |
+| Watcher | [scanner/watcher.go](https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/scanner/watcher.go) |
+| 扫描控制 | [scanner/controller.go](https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/scanner/controller.go) |
+| 封面 Worker | [core/artwork/worker.go](https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/core/artwork/worker.go) |
+| 服务管理 | [cmd/svc.go](https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/svc.go) |
 
-分析文档放在 modules/<分组>/<模块>/implementations/navidrome.md；本页只保留导航。模块状态统一记录在 [coverage.json](../../modules/coverage.json)，状态含义见 [维护约定](../../CONTRIBUTING.md)。
+[生命周期](../../modules/application/lifecycle/implementations/navidrome.md) 为 analyzed；其余入口仅定位，不表示独立模块分析已完成。[覆盖记录](../../modules/coverage.json) 保存进度，运行验证均待开展。

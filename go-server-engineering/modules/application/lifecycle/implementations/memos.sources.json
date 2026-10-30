@@ -1,0 +1,307 @@
+{
+  "format_version": 1,
+  "sample_id": "memos",
+  "module_id": "application/lifecycle",
+  "source_ref": "v0.31.0",
+  "source_revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+  "verified_at": "2026-10-30",
+  "analysis_mode": "static_source_review",
+  "runtime_validated": false,
+  "scope": "固定 release 的 cmd/memos、server 生命周期、SSE、上传会话、Store/缓存与启动测试；SQLite 为数据库构造示例，不覆盖全部异步活动或数据库后端",
+  "source_acquisition": "GitHub connector 固定 SHA 文件及完整目录树；Git clone 网络失败；本地为部分快照而非完整 checkout",
+  "dependency_baselines": [
+    {
+      "module": "github.com/labstack/echo/v5",
+      "version": "v5.3.1"
+    },
+    {
+      "module": "github.com/spf13/cobra",
+      "version": "v1.10.2"
+    },
+    {
+      "module": "connectrpc.com/connect",
+      "version": "v1.20.0"
+    },
+    {
+      "module": "github.com/grpc-ecosystem/grpc-gateway/v2",
+      "version": "v2.30.0"
+    },
+    {
+      "module": "golang.org/x/sync",
+      "version": "v0.22.0",
+      "note": "有依赖不代表主生命周期使用 errgroup；本轮仅观察 API semaphore 使用"
+    }
+  ],
+  "go_directive": "1.27.0",
+  "evidence": [
+    {
+      "id": "M_RUN",
+      "path": "cmd/memos/main.go",
+      "start_line": 110,
+      "end_line": 201,
+      "symbol": "func runServer()",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/cmd/memos/main.go#L110-L201",
+      "cached_file_sha256": "e5ddb6a058ca17d028eb3168257519f0fec6a82c8b6143c2ab4242406f97705c"
+    },
+    {
+      "id": "M_MAIN",
+      "path": "cmd/memos/main.go",
+      "start_line": 228,
+      "end_line": 233,
+      "symbol": "func main()",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/cmd/memos/main.go#L228-L233",
+      "cached_file_sha256": "e5ddb6a058ca17d028eb3168257519f0fec6a82c8b6143c2ab4242406f97705c"
+    },
+    {
+      "id": "M_CONFIG",
+      "path": "cmd/memos/main.go",
+      "start_line": 51,
+      "end_line": 113,
+      "symbol": "func init()",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/cmd/memos/main.go#L51-L113",
+      "cached_file_sha256": "e5ddb6a058ca17d028eb3168257519f0fec6a82c8b6143c2ab4242406f97705c"
+    },
+    {
+      "id": "M_NEW",
+      "path": "server/server.go",
+      "start_line": 49,
+      "end_line": 119,
+      "symbol": "func NewServer(",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/server.go#L49-L119",
+      "cached_file_sha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de"
+    },
+    {
+      "id": "M_START",
+      "path": "server/server.go",
+      "start_line": 108,
+      "end_line": 150,
+      "symbol": "func (s *Server) Start()",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/server.go#L108-L150",
+      "cached_file_sha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de"
+    },
+    {
+      "id": "M_STOP",
+      "path": "server/server.go",
+      "start_line": 144,
+      "end_line": 192,
+      "symbol": "func (s *Server) Shutdown(",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/server.go#L144-L192",
+      "cached_file_sha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de"
+    },
+    {
+      "id": "M_HEALTH",
+      "path": "server/server.go",
+      "start_line": 79,
+      "end_line": 83,
+      "symbol": "echoServer.GET(\"/healthz\"",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/server.go#L79-L83",
+      "cached_file_sha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de"
+    },
+    {
+      "id": "M_STORE",
+      "path": "store/store.go",
+      "start_line": 82,
+      "end_line": 89,
+      "symbol": "func (s *Store) Close()",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/store/store.go#L82-L89",
+      "cached_file_sha256": "2d3195c3159e301361a778f0f3ece5e442924d1ca4d05b553a0d68d069e9f126"
+    },
+    {
+      "id": "M_CACHE",
+      "path": "store/cache/cache.go",
+      "start_line": 187,
+      "end_line": 216,
+      "symbol": "func (c *Cache) Close()",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/store/cache/cache.go#L187-L216",
+      "cached_file_sha256": "b71a0d2b76b1d4d1db29346831f4c1f1eeec831763e41d618de3f9dffbeda9a0"
+    },
+    {
+      "id": "M_CACHE_NEW",
+      "path": "store/cache/cache.go",
+      "start_line": 76,
+      "end_line": 88,
+      "symbol": "func New(",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/store/cache/cache.go#L76-L88",
+      "cached_file_sha256": "b71a0d2b76b1d4d1db29346831f4c1f1eeec831763e41d618de3f9dffbeda9a0"
+    },
+    {
+      "id": "M_HUB",
+      "path": "server/api/v1/sse_hub.go",
+      "start_line": 63,
+      "end_line": 79,
+      "symbol": "func (h *SSEHub) Close()",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/api/v1/sse_hub.go#L63-L79",
+      "cached_file_sha256": "0532416cfcd3495a33c5033bbb71f525f9ffba81dea85358b352c48572801f49"
+    },
+    {
+      "id": "M_SSE",
+      "path": "server/api/v1/sse_handler.go",
+      "start_line": 88,
+      "end_line": 131,
+      "symbol": "// Prefer a hub-initiated disconnect",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/api/v1/sse_handler.go#L88-L131",
+      "cached_file_sha256": "783514e8670356e73c38f1fd82fc267e2311009c49375774c012e00138020d83"
+    },
+    {
+      "id": "M_UPLOAD",
+      "path": "server/api/v1/upload_session.go",
+      "start_line": 233,
+      "end_line": 264,
+      "symbol": "func (m *uploadSessions[T]) close()",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/api/v1/upload_session.go#L233-L264",
+      "cached_file_sha256": "dacceeb813ceff738d03b7363d2d9ea0833e46ee6c87bd3b0b1c229b4018b75e"
+    },
+    {
+      "id": "M_MIGRATE",
+      "path": "store/migrator.go",
+      "start_line": 102,
+      "end_line": 149,
+      "symbol": "func (s *Store) Migrate(",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/store/migrator.go#L102-L149",
+      "cached_file_sha256": "ce6d20f6fd17da99eeebcce89332a863c9d573764a7d5a2d23d0cbde082ac025"
+    },
+    {
+      "id": "M_SQLITE",
+      "path": "store/db/sqlite/sqlite.go",
+      "start_line": 24,
+      "end_line": 77,
+      "symbol": "func NewDB(",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/store/db/sqlite/sqlite.go#L24-L77",
+      "cached_file_sha256": "72c20abedc128baa922312f69a43238c46d50ab96515d01154852b395b21d21b"
+    },
+    {
+      "id": "M_API",
+      "path": "server/api/v1/v1.go",
+      "start_line": 97,
+      "end_line": 123,
+      "symbol": "func NewAPIV1Service(",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/api/v1/v1.go#L97-L123",
+      "cached_file_sha256": "774b8dc0782539315f071915961cef6327d281204edd142e249ae4139bc0a1c9"
+    },
+    {
+      "id": "M_TEST",
+      "path": "server/test/startup_test.go",
+      "start_line": 70,
+      "end_line": 146,
+      "symbol": "func bootInstance(",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/test/startup_test.go#L70-L146",
+      "cached_file_sha256": "e7d678dfee42e205b45d168cf06b1ba861678e72dc24170039eea1b4e8e54f06"
+    },
+    {
+      "id": "M_RESTART_TEST",
+      "path": "server/test/startup_test.go",
+      "start_line": 325,
+      "end_line": 357,
+      "symbol": "func TestStartupRestartPreservesData(",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/test/startup_test.go#L325-L357",
+      "cached_file_sha256": "e7d678dfee42e205b45d168cf06b1ba861678e72dc24170039eea1b4e8e54f06"
+    },
+    {
+      "id": "M_HUB_TEST",
+      "path": "server/api/v1/sse_hub_test.go",
+      "start_line": 49,
+      "end_line": 89,
+      "symbol": "func TestSSEHubClose(",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/server/api/v1/sse_hub_test.go#L49-L89",
+      "cached_file_sha256": "148b7f3e5799adbc59ef44a38a694cbc1f652f05af400df1d6f7dc07180586c1"
+    },
+    {
+      "id": "M_ENTRY",
+      "path": "scripts/entrypoint.sh",
+      "start_line": 50,
+      "end_line": 52,
+      "symbol": "file_env \"MEMOS_DSN\"",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/scripts/entrypoint.sh#L50-L52",
+      "cached_file_sha256": "ea52ddd94c6acea3f5ea165e18a1eddcbed3fc5997504f5d32b54cda99f875a3"
+    },
+    {
+      "id": "M_DOCKER",
+      "path": "scripts/Dockerfile",
+      "start_line": 56,
+      "end_line": 56,
+      "symbol": "ENTRYPOINT",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/scripts/Dockerfile#L56-L56",
+      "cached_file_sha256": "e259efa4da3ae80ceccd07e9e89cdf0fa77781c0e23574b7e253a6af637e0abd"
+    },
+    {
+      "id": "M_MOD",
+      "path": "go.mod",
+      "start_line": 1,
+      "end_line": 86,
+      "symbol": "module ",
+      "repository": "usememos/memos",
+      "revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "url": "https://github.com/usememos/memos/blob/2b2192d4e153bd04f1d325b60fd880cf00d68b01/go.mod#L1-L86",
+      "cached_file_sha256": "1ef9e52f8b27e19738d6259740c8c67790c494a7dd428c6a2aaea73fed65c3b4"
+    }
+  ],
+  "cached_paths": [
+    "cmd/memos/main.go",
+    "server/server.go",
+    "store/store.go",
+    "store/db/db.go",
+    "go.mod",
+    "server/api/v1/v1.go",
+    "server/api/v1/sse_hub.go",
+    "server/api/v1/sse_handler.go",
+    "server/api/v1/upload_session.go",
+    "store/cache/cache.go",
+    "store/migrator.go",
+    "store/db/sqlite/sqlite.go",
+    "internal/profile/profile.go",
+    "cmd/memos/main_test.go",
+    "scripts/Dockerfile",
+    "scripts/entrypoint.sh",
+    "server/test/startup_test.go",
+    "server/api/v1/sse_hub_test.go"
+  ],
+  "checks_not_run": [
+    "构建/单元测试/集成测试",
+    "真实信号与容器",
+    "HTTP 超时/强制关闭",
+    "上传与缓存清理阻塞",
+    "进程崩溃恢复"
+  ]
+}

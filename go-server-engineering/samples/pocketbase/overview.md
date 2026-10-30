@@ -1,21 +1,26 @@
 # PocketBase 样本档案
 
-状态：已登记，待核验与分析。
+状态：生命周期第一轮静态分析完成，未运行验证。
 
-- 产品方向：可嵌入的通用后端底座。
-- 原始 GitHub 入口：https://github.com/pocketbase/pocketbase
-- 规范仓库与分析基线：以 [样本登记表](../registry.json) 为入口；尚未固定 SHA。
-- 分支、版本标签、完整 SHA、源码核验日期：待补充。
+- 产品方向：可嵌入的实时后端与管理界面。
+- 分析仓库：[pocketbase/pocketbase](https://github.com/pocketbase/pocketbase)。
+- 本轮标签：v0.40.6；完整 SHA：9d281ccaba65f2686eb7b0b614ccda72d1116a1b。
+- 核验日期：2026-10-30。
+- go.mod 声明 Go 1.27；实际发行制品工具链未核验。
+- 固定版本的部分源码快照位于 .cache/repos/pocketbase-evidence/，不提交。
 
-托管迁移线索：旧 GitHub 地址与新地址保存在 registry.json，待分析前重新核验。
+该项目已迁往[新托管地址](https://ganigeorgiev.com/pocketbase/pocketbase)；本篇使用旧 GitHub 仓库中的历史版本，不代表新仓库当前实现。归档不代表停止开发。
 
-## 待研究
+## 架构认识
 
-产品核心流程；前后端组织；数据库与外部依赖；最小运行方式；整体架构与约束。按照 [样本模板](../../templates/sample.md) 填充。
+Start/Execute 管理命令与退出；Bootstrap 建立底座；Serve 和 ClearBootstrap 通过事件链组织 HTTP、日志、Cron 与 DB。扩展处理器必须遵守 Next 契约。
 
-## 关联
+## 证据与边界
 
-- [模块入口映射](module-map.md)
-- [模块地图](../../modules/README.md)
+- [生命周期带读](../../modules/application/lifecycle/implementations/pocketbase.md)
+- [证据清单](../../modules/application/lifecycle/implementations/pocketbase.sources.json)
+- [模块映射](module-map.md)
 
-此页不重复保存模块实现细节。尚未核验技术栈版本、运行环境或具体实现。
+迁移前 GitHub v0.40.6 历史基线：Go 扩展入口、Bootstrap/Execute、主 HTTP/SSE、事件链、Cron、日志和 DB 清理。不代表新托管仓库当前实现，不完整审计 JS 插件、备份和所有异步任务。
+
+未执行构建、测试、服务或退出实验；独立配置、数据、路由和业务模块仍待研究。

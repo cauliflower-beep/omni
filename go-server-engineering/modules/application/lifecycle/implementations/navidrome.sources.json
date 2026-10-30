@@ -1,0 +1,388 @@
+{
+  "format_version": 1,
+  "sample_id": "navidrome",
+  "module_id": "application/lifecycle",
+  "source_ref": "v0.64.2",
+  "source_revision": "101145742f4762164202cb4858c9126258bdc463",
+  "verified_at": "2026-10-30",
+  "analysis_mode": "static_source_review",
+  "runtime_validated": false,
+  "scope": "普通命令、HTTP、调度、扫描控制/Watcher、封面 Worker、DB 初始化；服务管理回调为补充。不覆盖所有插件、存储和转码进程。",
+  "source_acquisition": "GitHub connector 固定 SHA 与目录树；本地是部分源码快照",
+  "evidence": [
+    {
+      "id": "N_ENTRY",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "main.go",
+      "symbol": "func main()",
+      "start_line": 11,
+      "end_line": 20,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/main.go#L11-L20",
+      "cached_file_sha256": "9ae2718cda4066c3dd712e7c32e8917d802116b6352290db56b04445c1cc1c4a"
+    },
+    {
+      "id": "N_RUN",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/root.go",
+      "symbol": "func runNavidrome(",
+      "start_line": 81,
+      "end_line": 117,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/root.go#L81-L117",
+      "cached_file_sha256": "42727e5fdd92fb3296e20dee62fe6489b766f0b8886134e855f04e2353fb72ec"
+    },
+    {
+      "id": "N_SIGNAL",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/root.go",
+      "symbol": "func mainContext(",
+      "start_line": 111,
+      "end_line": 120,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/root.go#L111-L120",
+      "cached_file_sha256": "42727e5fdd92fb3296e20dee62fe6489b766f0b8886134e855f04e2353fb72ec"
+    },
+    {
+      "id": "N_HTTP_START",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/root.go",
+      "symbol": "func startServer(",
+      "start_line": 121,
+      "end_line": 165,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/root.go#L121-L165",
+      "cached_file_sha256": "42727e5fdd92fb3296e20dee62fe6489b766f0b8886134e855f04e2353fb72ec"
+    },
+    {
+      "id": "N_INITIAL_SCAN",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/root.go",
+      "symbol": "func runInitialScan(",
+      "start_line": 199,
+      "end_line": 249,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/root.go#L199-L249",
+      "cached_file_sha256": "42727e5fdd92fb3296e20dee62fe6489b766f0b8886134e855f04e2353fb72ec"
+    },
+    {
+      "id": "N_SCAN_JOB",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/root.go",
+      "symbol": "func schedulePeriodicScan(",
+      "start_line": 161,
+      "end_line": 186,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/root.go#L161-L186",
+      "cached_file_sha256": "42727e5fdd92fb3296e20dee62fe6489b766f0b8886134e855f04e2353fb72ec"
+    },
+    {
+      "id": "N_BACKUP",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/root.go",
+      "symbol": "func schedulePeriodicBackup(",
+      "start_line": 260,
+      "end_line": 303,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/root.go#L260-L303",
+      "cached_file_sha256": "42727e5fdd92fb3296e20dee62fe6489b766f0b8886134e855f04e2353fb72ec"
+    },
+    {
+      "id": "N_SCHED_START",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/root.go",
+      "symbol": "func startScheduler(",
+      "start_line": 319,
+      "end_line": 329,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/root.go#L319-L329",
+      "cached_file_sha256": "42727e5fdd92fb3296e20dee62fe6489b766f0b8886134e855f04e2353fb72ec"
+    },
+    {
+      "id": "N_WATCH_START",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/root.go",
+      "symbol": "func startScanWatcher(",
+      "start_line": 245,
+      "end_line": 260,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/root.go#L245-L260",
+      "cached_file_sha256": "42727e5fdd92fb3296e20dee62fe6489b766f0b8886134e855f04e2353fb72ec"
+    },
+    {
+      "id": "N_HTTP",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "server/server.go",
+      "symbol": "func (s *Server) Run(",
+      "start_line": 59,
+      "end_line": 157,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/server/server.go#L59-L157",
+      "cached_file_sha256": "df639b6ba54cb558243255a8780e4114a1f87b1dae27868ce333d4af974d108f"
+    },
+    {
+      "id": "N_HEALTH",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "server/server.go",
+      "symbol": "func (s *Server) initRoutes()",
+      "start_line": 166,
+      "end_line": 207,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/server/server.go#L166-L207",
+      "cached_file_sha256": "df639b6ba54cb558243255a8780e4114a1f87b1dae27868ce333d4af974d108f"
+    },
+    {
+      "id": "N_SCHED",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "scheduler/scheduler.go",
+      "symbol": "func (s *scheduler) Run(",
+      "start_line": 29,
+      "end_line": 36,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/scheduler/scheduler.go#L29-L36",
+      "cached_file_sha256": "8d312d89aa8bd5af29cdd23f1fb10ea743889901b0eb1d541c94a2d1c11eb03f"
+    },
+    {
+      "id": "N_DB",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "db/db.go",
+      "symbol": "func Init(",
+      "start_line": 81,
+      "end_line": 130,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/db/db.go#L81-L130",
+      "cached_file_sha256": "67d9f6d01e86c6c27f3860b7904aba3f9f51446ebaad2ba84a8d526cd26b91c8"
+    },
+    {
+      "id": "N_DB_CLOSE",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "db/db.go",
+      "symbol": "func Close(",
+      "start_line": 70,
+      "end_line": 82,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/db/db.go#L70-L82",
+      "cached_file_sha256": "67d9f6d01e86c6c27f3860b7904aba3f9f51446ebaad2ba84a8d526cd26b91c8"
+    },
+    {
+      "id": "N_FATAL",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "log/log.go",
+      "symbol": "func Fatal(",
+      "start_line": 208,
+      "end_line": 212,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/log/log.go#L208-L212",
+      "cached_file_sha256": "bb8be3f143b49dd7aa4d09ddaad9e4fca09c6dcb0e9be2cb000601c1854dc705"
+    },
+    {
+      "id": "N_WORKER",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "core/artwork/worker.go",
+      "symbol": "func (w *Worker) Run(",
+      "start_line": 101,
+      "end_line": 140,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/core/artwork/worker.go#L101-L140",
+      "cached_file_sha256": "08f98b01ca0da9ff304c8562f121a3a6d149c7253d5ba01c81acc052ebb78488"
+    },
+    {
+      "id": "N_DRAIN",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "core/artwork/worker.go",
+      "symbol": "func (w *Worker) drain(",
+      "start_line": 152,
+      "end_line": 218,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/core/artwork/worker.go#L152-L218",
+      "cached_file_sha256": "08f98b01ca0da9ff304c8562f121a3a6d149c7253d5ba01c81acc052ebb78488"
+    },
+    {
+      "id": "N_WATCH",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "scanner/watcher.go",
+      "symbol": "func (w *watcher) Run(",
+      "start_line": 58,
+      "end_line": 153,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/scanner/watcher.go#L58-L153",
+      "cached_file_sha256": "7000ba03532d9b2a552483fa119a559eadf291730af9ad14eaa563141a20c6c6"
+    },
+    {
+      "id": "N_CONTROLLER",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "scanner/controller.go",
+      "symbol": "func (s *controller) ScanFolders(",
+      "start_line": 204,
+      "end_line": 282,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/scanner/controller.go#L204-L282",
+      "cached_file_sha256": "d3aa557a783ff4dfa83055745080af285387eb15cadd881242053e7d5082bc31"
+    },
+    {
+      "id": "N_TRACK",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "scanner/controller.go",
+      "symbol": "func (s *controller) trackProgress(",
+      "start_line": 345,
+      "end_line": 396,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/scanner/controller.go#L345-L396",
+      "cached_file_sha256": "d3aa557a783ff4dfa83055745080af285387eb15cadd881242053e7d5082bc31"
+    },
+    {
+      "id": "N_VALUES",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "model/request/request.go",
+      "symbol": "func AddValues(",
+      "start_line": 143,
+      "end_line": 152,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/model/request/request.go#L143-L152",
+      "cached_file_sha256": "a03b26192ae8b7137b45d32ee4227a46860e5861c695ba9d3915fda47ce5b088"
+    },
+    {
+      "id": "N_SVC",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/svc.go",
+      "symbol": "func (p *svcControl) Start(",
+      "start_line": 52,
+      "end_line": 78,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/svc.go#L52-L78",
+      "cached_file_sha256": "5098833a4ef9b9d28523f8f8d85c91fdbf58ea778cf66278f358ce066c00f28b"
+    },
+    {
+      "id": "N_UNIX",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/signaller_unix.go",
+      "symbol": "func startSignaller(",
+      "start_line": 17,
+      "end_line": 40,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/signaller_unix.go#L17-L40",
+      "cached_file_sha256": "55e4734231c0af9670c15d945ba64d4f7d278db54cf626f1ea1faf3e84203f2e"
+    },
+    {
+      "id": "N_NONUNIX",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/signaller_nounix.go",
+      "symbol": "func startSignaller(",
+      "start_line": 10,
+      "end_line": 14,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/signaller_nounix.go#L10-L14",
+      "cached_file_sha256": "157a5b297c8bea83e6437909745f4a48acb822fae6fa0566e278760c08a1d871"
+    },
+    {
+      "id": "N_MOD",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "go.mod",
+      "symbol": "module ",
+      "start_line": 1,
+      "end_line": 116,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/go.mod#L1-L116",
+      "cached_file_sha256": "0da6c1b22b10c26546885ea701c0c2c3c3d121eb3a2df09aba15256bcbd8bae2"
+    },
+    {
+      "id": "N_TEST",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "scheduler/scheduler_test.go",
+      "symbol": "func TestScheduler(",
+      "start_line": 13,
+      "end_line": 28,
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/scheduler/scheduler_test.go#L13-L28",
+      "cached_file_sha256": "ca5cceaa5d9e81f9a57389d852b5f8bc0a10f699d3abe1e8b3ab6478618d43ea"
+    },
+    {
+      "id": "E_GROUP",
+      "repository": "golang/sync",
+      "revision": "f75267d8412fc1dfd12b343644a7ea46e4d9c85d",
+      "path": "errgroup/errgroup.go",
+      "start_line": 43,
+      "end_line": 112,
+      "symbol": "// WithContext returns",
+      "url": "https://github.com/golang/sync/blob/f75267d8412fc1dfd12b343644a7ea46e4d9c85d/errgroup/errgroup.go#L43-L112"
+    },
+    {
+      "id": "C_STOP",
+      "repository": "robfig/cron",
+      "revision": "ccba498c397bb90a9c84945bbb0f7af2d72b6309",
+      "path": "cron.go",
+      "start_line": 323,
+      "end_line": 340,
+      "symbol": "func (c *Cron) Stop()",
+      "url": "https://github.com/robfig/cron/blob/ccba498c397bb90a9c84945bbb0f7af2d72b6309/cron.go#L323-L340"
+    },
+    {
+      "id": "N_TEMPLATE",
+      "repository": "navidrome/navidrome",
+      "revision": "101145742f4762164202cb4858c9126258bdc463",
+      "path": "cmd/svc.go",
+      "start_line": 247,
+      "end_line": 250,
+      "symbol": "TimeoutStopSec=20",
+      "cached_file_sha256": "5098833a4ef9b9d28523f8f8d85c91fdbf58ea778cf66278f358ce066c00f28b",
+      "url": "https://github.com/navidrome/navidrome/blob/101145742f4762164202cb4858c9126258bdc463/cmd/svc.go#L247-L250"
+    }
+  ],
+  "cached_paths": [
+    "main.go",
+    "cmd/root.go",
+    "cmd/signaller_unix.go",
+    "cmd/signaller_nounix.go",
+    "cmd/svc.go",
+    "server/server.go",
+    "scheduler/scheduler.go",
+    "scanner/controller.go",
+    "scanner/watcher.go",
+    "go.mod",
+    "db/db.go",
+    "core/artwork/worker.go",
+    "utils/singleton/singleton.go",
+    "utils/pl/pipelines.go",
+    "model/request/request.go",
+    "log/log.go",
+    "scheduler/scheduler_test.go"
+  ],
+  "dependency_baselines": [
+    {
+      "module": "golang.org/x/sync",
+      "version": "v0.23.0",
+      "revision": "f75267d8412fc1dfd12b343644a7ea46e4d9c85d"
+    },
+    {
+      "module": "github.com/robfig/cron/v3",
+      "version": "v3.0.1",
+      "revision": "ccba498c397bb90a9c84945bbb0f7af2d72b6309"
+    },
+    {
+      "module": "github.com/google/wire",
+      "version": "v0.7.0"
+    },
+    {
+      "module": "github.com/go-chi/chi/v5",
+      "version": "v5.3.2"
+    },
+    {
+      "module": "github.com/spf13/cobra",
+      "version": "v1.10.2"
+    },
+    {
+      "module": "github.com/kardianos/service",
+      "version": "v1.3.0"
+    }
+  ],
+  "go_directive": "1.27",
+  "checks_not_run": [
+    "构建及测试",
+    "HTTP 超时/异常",
+    "Cron 运行中任务退出",
+    "扫描/Watcher 派生工作结束",
+    "封面外部调用取消",
+    "实际平台停止预算",
+    "崩溃恢复"
+  ]
+}

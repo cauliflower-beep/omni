@@ -1,19 +1,24 @@
 # Gotify 样本档案
 
-状态：已登记，待核验与分析。
+状态：生命周期第一轮静态分析完成，未运行验证。
 
 - 产品方向：消息推送。
-- 原始 GitHub 入口：https://github.com/gotify/server
-- 规范仓库与分析基线：以 [样本登记表](../registry.json) 为入口；尚未固定 SHA。
-- 分支、版本标签、完整 SHA、源码核验日期：待补充。
+- 分析仓库：[gotify/server](https://github.com/gotify/server)。
+- 本轮标签：v3.1.1；完整 SHA：e6361caa512547052b1013dbf4544e6d7ff32604。
+- 核验日期：2026-10-30。
+- go.mod 声明 Go 1.25.0；实际发行制品工具链未核验。
+- 固定版本的部分源码快照位于 .cache/repos/gotify-evidence/，不提交。
 
-## 待研究
+## 架构认识
 
-产品核心流程；前后端组织；数据库与外部依赖；最小运行方式；整体架构与约束。按照 [样本模板](../../templates/sample.md) 填充。
+入口显式装配数据库与 Gin；Runner 管理 HTTP/TLS；Stream 单独管理 WebSocket。返回的清理函数只关闭 Stream，不覆盖全部后台活动。
 
-## 关联
+## 证据与边界
 
-- [模块入口映射](module-map.md)
-- [模块地图](../../modules/README.md)
+- [生命周期带读](../../modules/application/lifecycle/implementations/gotify.md)
+- [证据清单](../../modules/application/lifecycle/implementations/gotify.sources.json)
+- [模块映射](module-map.md)
 
-此页不重复保存模块实现细节。尚未核验技术栈版本、运行环境或具体实现。
+常规 serve：配置与数据库初始化、Gin 装配、HTTP/TLS 监听、WebSocket 与数据库清理；不完整审计插件、OIDC 与部署信号链。
+
+未执行构建、测试、服务或退出实验；独立配置、数据、路由和业务模块仍待研究。

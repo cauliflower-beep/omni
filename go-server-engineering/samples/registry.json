@@ -7,10 +7,11 @@
       "purpose": "问答社区",
       "repository_url": "https://github.com/apache/answer",
       "registered_on": "2026-10-29",
-      "source_revision": null,
-      "source_ref": null,
-      "verified_at": null,
-      "status": "registered"
+      "source_revision": "6744295fa888e0621fc9f9a8ace04f1a4daf8554",
+      "source_ref": "v2.0.3",
+      "verified_at": "2026-10-29",
+      "status": "analyzed",
+      "note": "仅生命周期完成第一轮静态分析；不代表全部模块已分析或运行验证。"
     },
     {
       "id": "pocketbase",
@@ -18,12 +19,13 @@
       "purpose": "可嵌入的通用后端底座",
       "repository_url": "https://ganigeorgiev.com/pocketbase/pocketbase",
       "registered_on": "2026-10-29",
-      "source_revision": null,
-      "source_ref": null,
-      "verified_at": null,
-      "status": "registered",
+      "source_revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "source_ref": "v0.40.6",
+      "verified_at": "2026-10-30",
+      "status": "analyzed",
       "previous_repository_url": "https://github.com/pocketbase/pocketbase",
-      "note": "上轮检索发现托管迁移；深入分析前须重新核验规范地址并固定 SHA。"
+      "note": "迁移前 GitHub v0.40.6 历史基线；仅生命周期静态分析，不代表新托管仓库当前实现，未运行。",
+      "analysis_repository_url": "https://github.com/pocketbase/pocketbase"
     },
     {
       "id": "memos",
@@ -31,10 +33,11 @@
       "purpose": "自托管笔记",
       "repository_url": "https://github.com/usememos/memos",
       "registered_on": "2026-10-29",
-      "source_revision": null,
-      "source_ref": null,
-      "verified_at": null,
-      "status": "registered"
+      "source_revision": "2b2192d4e153bd04f1d325b60fd880cf00d68b01",
+      "source_ref": "v0.31.0",
+      "verified_at": "2026-10-30",
+      "status": "analyzed",
+      "note": "仅生命周期第一轮静态分析；部分源码快照，未构建运行。"
     },
     {
       "id": "navidrome",
@@ -42,10 +45,11 @@
       "purpose": "音乐管理与流媒体",
       "repository_url": "https://github.com/navidrome/navidrome",
       "registered_on": "2026-10-29",
-      "source_revision": null,
-      "source_ref": null,
-      "verified_at": null,
-      "status": "registered"
+      "source_revision": "101145742f4762164202cb4858c9126258bdc463",
+      "source_ref": "v0.64.2",
+      "verified_at": "2026-10-30",
+      "status": "analyzed",
+      "note": "生命周期第一轮静态分析；部分源码快照，未运行。"
     },
     {
       "id": "gotify",
@@ -53,10 +57,11 @@
       "purpose": "消息推送",
       "repository_url": "https://github.com/gotify/server",
       "registered_on": "2026-10-29",
-      "source_revision": null,
-      "source_ref": null,
-      "verified_at": null,
-      "status": "registered"
+      "source_revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "source_ref": "v3.1.1",
+      "verified_at": "2026-10-30",
+      "status": "analyzed",
+      "note": "仅生命周期第一轮静态分析；部分源码快照，未构建运行。"
     },
     {
       "id": "gitea",
@@ -64,10 +69,11 @@
       "purpose": "Git 托管与研发协作",
       "repository_url": "https://github.com/go-gitea/gitea",
       "registered_on": "2026-10-29",
-      "source_revision": null,
-      "source_ref": null,
-      "verified_at": null,
-      "status": "registered"
+      "source_revision": "829b49c1ae96015e345f9d2a0eb1ea7acd5f31e1",
+      "source_ref": "v28.2.0",
+      "verified_at": "2026-10-30",
+      "status": "analyzed",
+      "note": "仅生命周期第一轮静态分析；部分源码快照，未构建运行。"
     },
     {
       "id": "beszel",

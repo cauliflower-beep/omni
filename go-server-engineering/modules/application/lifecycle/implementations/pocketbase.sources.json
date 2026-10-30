@@ -1,0 +1,262 @@
+{
+  "format_version": 1,
+  "sample_id": "pocketbase",
+  "module_id": "application/lifecycle",
+  "source_ref": "v0.40.6",
+  "source_revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+  "verified_at": "2026-10-30",
+  "source_selection": "固定 release 标签对应 SHA；不是跟踪分支",
+  "repository_url": "https://github.com/pocketbase/pocketbase",
+  "analysis_mode": "static_source_review",
+  "runtime_validated": false,
+  "scope": "迁移前 GitHub v0.40.6 历史基线：Go 扩展入口、Bootstrap/Execute、主 HTTP/SSE、事件链、Cron、日志和 DB 清理。不代表新托管仓库当前实现，不完整审计 JS 插件、备份和所有异步任务。",
+  "source_acquisition": "GitHub connector 读取固定 SHA 文件与目录树；本地为部分源码快照，不是完整 checkout",
+  "evidence": [
+    {
+      "id": "PB_MAIN",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "examples/base/main.go",
+      "symbol": "func main()",
+      "start_line": 19,
+      "end_line": 126,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/examples/base/main.go#L19-L126",
+      "cached_file_sha256": "69a1ed2a21cd2ae90ca137eaaa65f72146b1dc8968c0fb7149e8603308f22424"
+    },
+    {
+      "id": "PB_START",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "pocketbase.go",
+      "symbol": "func (pb *PocketBase) Start(",
+      "start_line": 167,
+      "end_line": 173,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/pocketbase.go#L167-L173",
+      "cached_file_sha256": "31541501de6d150d608faf151421d41b09d6cea19d5fbf7053fc7fe325732ed6"
+    },
+    {
+      "id": "PB_EXEC",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "pocketbase.go",
+      "symbol": "func (pb *PocketBase) Execute(",
+      "start_line": 180,
+      "end_line": 215,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/pocketbase.go#L180-L215",
+      "cached_file_sha256": "31541501de6d150d608faf151421d41b09d6cea19d5fbf7053fc7fe325732ed6"
+    },
+    {
+      "id": "PB_BOOT",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "core/base.go",
+      "symbol": "func (app *BaseApp) Bootstrap(",
+      "start_line": 412,
+      "end_line": 464,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/core/base.go#L412-L464",
+      "cached_file_sha256": "705195cf24fc1930ab4b7128b6c738ecf2964c2eb5c85b328e7ed4562b70c766"
+    },
+    {
+      "id": "PB_CLEAR",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "core/base.go",
+      "symbol": "func (app *BaseApp) ClearBootstrap(",
+      "start_line": 475,
+      "end_line": 515,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/core/base.go#L475-L515",
+      "cached_file_sha256": "705195cf24fc1930ab4b7128b6c738ecf2964c2eb5c85b328e7ed4562b70c766"
+    },
+    {
+      "id": "PB_CMD",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "cmd/serve.go",
+      "symbol": "func NewServeCommand(",
+      "start_line": 14,
+      "end_line": 77,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/cmd/serve.go#L14-L77",
+      "cached_file_sha256": "4e93819a5d39c48015edce5b5e391662f6402d69cf4bdf8c5b1d7b3713a91163"
+    },
+    {
+      "id": "PB_SERVE",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "apis/serve.go",
+      "symbol": "func Serve(",
+      "start_line": 61,
+      "end_line": 314,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/serve.go#L61-L314",
+      "cached_file_sha256": "6a0db6dee94c8f17895056786d8366001ced5666a3908d9f0a4066c458d8ee3f"
+    },
+    {
+      "id": "PB_STOP",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "apis/serve.go",
+      "symbol": "Id: \"pbGracefulShutdown\"",
+      "start_line": 172,
+      "end_line": 203,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/serve.go#L172-L203",
+      "cached_file_sha256": "6a0db6dee94c8f17895056786d8366001ced5666a3908d9f0a4066c458d8ee3f"
+    },
+    {
+      "id": "PB_BIND",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "apis/serve.go",
+      "symbol": "serveHookErr := app.OnServe().Trigger",
+      "start_line": 217,
+      "end_line": 281,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/serve.go#L217-L281",
+      "cached_file_sha256": "6a0db6dee94c8f17895056786d8366001ced5666a3908d9f0a4066c458d8ee3f"
+    },
+    {
+      "id": "PB_EXTRA",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "apis/serve.go",
+      "symbol": "// start an additional HTTP server",
+      "start_line": 299,
+      "end_line": 304,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/serve.go#L299-L304",
+      "cached_file_sha256": "6a0db6dee94c8f17895056786d8366001ced5666a3908d9f0a4066c458d8ee3f"
+    },
+    {
+      "id": "PB_CRONHOOK",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "core/base.go",
+      "symbol": "Id: \"__pbCronStart__\"",
+      "start_line": 1434,
+      "end_line": 1451,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/core/base.go#L1434-L1451",
+      "cached_file_sha256": "705195cf24fc1930ab4b7128b6c738ecf2964c2eb5c85b328e7ed4562b70c766"
+    },
+    {
+      "id": "PB_LOG",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "core/base.go",
+      "symbol": "func (app *BaseApp) initLogger(",
+      "start_line": 1501,
+      "end_line": 1660,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/core/base.go#L1501-L1660",
+      "cached_file_sha256": "705195cf24fc1930ab4b7128b6c738ecf2964c2eb5c85b328e7ed4562b70c766"
+    },
+    {
+      "id": "PB_LOGSTOP",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "core/base.go",
+      "symbol": "Id: \"__pbAppLoggerFlushBeforeStop__\"",
+      "start_line": 1591,
+      "end_line": 1613,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/core/base.go#L1591-L1613",
+      "cached_file_sha256": "705195cf24fc1930ab4b7128b6c738ecf2964c2eb5c85b328e7ed4562b70c766"
+    },
+    {
+      "id": "PB_CRON",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "tools/cron/cron.go",
+      "symbol": "func (c *Cron) Stop(",
+      "start_line": 157,
+      "end_line": 173,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/tools/cron/cron.go#L157-L173",
+      "cached_file_sha256": "b58d6223bf1f5d6645bd7c14e44d8d566ede1e005bac45be3362db32e8f0c930"
+    },
+    {
+      "id": "PB_JOBS",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "tools/cron/cron.go",
+      "symbol": "func (c *Cron) runDue(",
+      "start_line": 219,
+      "end_line": 230,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/tools/cron/cron.go#L219-L230",
+      "cached_file_sha256": "b58d6223bf1f5d6645bd7c14e44d8d566ede1e005bac45be3362db32e8f0c930"
+    },
+    {
+      "id": "PB_SSE",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "apis/realtime.go",
+      "symbol": "func realtimeConnect(",
+      "start_line": 43,
+      "end_line": 166,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/realtime.go#L43-L166",
+      "cached_file_sha256": "c144370ea269f3a09cefdc823101edd0027961799834eebdafa519a4f0bc7f2a"
+    },
+    {
+      "id": "PB_HOOK",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "tools/hook/hook.go",
+      "symbol": "func (h *Hook[T]) Bind(",
+      "start_line": 65,
+      "end_line": 104,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/tools/hook/hook.go#L65-L104",
+      "cached_file_sha256": "d41e571e5980889f0ad1a779a664a2a39c188c9f6d0abdd56e34edda83c6925a"
+    },
+    {
+      "id": "PB_CHAIN",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "tools/hook/hook.go",
+      "symbol": "func (h *Hook[T]) Trigger(",
+      "start_line": 153,
+      "end_line": 174,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/tools/hook/hook.go#L153-L174",
+      "cached_file_sha256": "d41e571e5980889f0ad1a779a664a2a39c188c9f6d0abdd56e34edda83c6925a"
+    },
+    {
+      "id": "PB_MOD",
+      "repository": "pocketbase/pocketbase",
+      "revision": "9d281ccaba65f2686eb7b0b614ccda72d1116a1b",
+      "path": "go.mod",
+      "symbol": "module ",
+      "start_line": 1,
+      "end_line": 50,
+      "url": "https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/go.mod#L1-L50",
+      "cached_file_sha256": "0bead3780cbf4e70f6ee4c31b0b87f5c0c2d5ac773e7d261c1eed4bcf0c41534"
+    }
+  ],
+  "cache_root": ".cache/repos/pocketbase-evidence",
+  "cached_paths": [
+    "go.mod",
+    "cmd/serve.go",
+    "examples/base/main.go",
+    "pocketbase.go",
+    "apis/serve.go",
+    "core/base.go",
+    "tools/cron/cron.go",
+    "apis/realtime.go",
+    "tools/hook/hook.go",
+    "tools/hook/event.go"
+  ],
+  "dependency_baselines": [
+    {
+      "module": "github.com/pocketbase/dbx",
+      "version": "v1.12.0"
+    },
+    {
+      "module": "github.com/spf13/cobra",
+      "version": "v1.10.2"
+    },
+    {
+      "module": "modernc.org/sqlite",
+      "version": "v1.60.1"
+    }
+  ],
+  "go_directive": "1.27",
+  "checks_not_run": [
+    "构建与上游测试",
+    "监听失败与运行故障注入",
+    "信号、超时与连接退出",
+    "后台任务结束与依赖释放顺序",
+    "实际平台进程控制与崩溃恢复"
+  ],
+  "canonical_repository_url": "https://ganigeorgiev.com/pocketbase/pocketbase",
+  "baseline_note": "分析迁移前 GitHub 历史版本，不代表新托管仓库当前实现。"
+}

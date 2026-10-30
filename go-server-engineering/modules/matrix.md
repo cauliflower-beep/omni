@@ -1,6 +1,6 @@
 # 样本 × 模块：覆盖矩阵约定
 
-当前 12 个样本均未开始模块检索，coverage.json 的 records 为空。无记录默认显示“待检索”，不意味着“不存在”。
+第一批共 12 个样本；其中 Answer、Memos、Navidrome、Gotify、Gitea、PocketBase 的生命周期已有第一轮静态分析，相关模块入口已按范围登记。尚无运行验证记录。具体状态以 coverage.json 为准；无记录默认显示“待检索”，不意味着“不存在”。
 
 ## 数据来源
 

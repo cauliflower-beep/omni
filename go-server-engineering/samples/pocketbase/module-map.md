@@ -1,9 +1,18 @@
-# PocketBase 模块入口映射
+# PocketBase 模块映射
 
-状态：待检索。先固定源码 SHA，再添加真实入口和分析链接。
+基线：v0.40.6 / 9d281ccaba65f2686eb7b0b614ccda72d1116a1b，核验日期 2026-10-30。
 
-| 模块 | 固定版本源码 / 关键符号 | 实现分析 | 说明 |
-| --- | --- | --- | --- |
-| 待补充 | — | — | 尚未检索，不代表项目没有相关能力 |
+仅对应迁移前 GitHub 历史版本；规范仓库地址见[样本档案](overview.md)。
 
-分析文档放在 modules/<分组>/<模块>/implementations/pocketbase.md；本页只保留导航。模块状态统一记录在 [coverage.json](../../modules/coverage.json)，状态含义见 [维护约定](../../CONTRIBUTING.md)。
+| 模块 | 固定版本源码 | 关键符号 / 入口 |
+| --- | --- | --- |
+| 生命周期 | [pocketbase.go](https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/pocketbase.go) | Execute |
+| 启动装配 | [core/base.go](https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/core/base.go) | Bootstrap / ClearBootstrap |
+| HTTP | [apis/serve.go](https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/serve.go) | Serve |
+| apis 路由装配 | [apis/serve.go](https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/serve.go) | NewRouter 调用 / OnServe 构建 mux |
+| SSE | [apis/realtime.go](https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/realtime.go) | realtimeConnect |
+| 数据库 | [core/base.go](https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/core/base.go) | initDataDB / initAuxDB / ClearBootstrap |
+| 迁移 | [apis/serve.go](https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/apis/serve.go) | RunAllMigrations 调用 |
+| 定时调度 | [tools/cron/cron.go](https://github.com/pocketbase/pocketbase/blob/9d281ccaba65f2686eb7b0b614ccda72d1116a1b/tools/cron/cron.go) | Start / Stop / runDue |
+
+[生命周期](../../modules/application/lifecycle/implementations/pocketbase.md) 为 analyzed；其余仅为 located。状态见[覆盖记录](../../modules/coverage.json)，不表示整个模块已分析或验证。

@@ -1,0 +1,266 @@
+{
+  "format_version": 1,
+  "sample_id": "gotify",
+  "module_id": "application/lifecycle",
+  "source_ref": "v3.1.1",
+  "source_revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+  "verified_at": "2026-10-30",
+  "source_selection": "固定 release 标签对应 SHA；不是跟踪分支",
+  "repository_url": "https://github.com/gotify/server",
+  "analysis_mode": "static_source_review",
+  "runtime_validated": false,
+  "scope": "常规 serve：配置与数据库初始化、Gin 装配、HTTP/TLS 监听、WebSocket 与数据库清理；不完整审计插件、OIDC 与部署信号链。",
+  "source_acquisition": "GitHub connector 读取固定 SHA 文件与目录树；本地为部分源码快照，不是完整 checkout",
+  "evidence": [
+    {
+      "id": "GF_ENTRY",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "app.go",
+      "symbol": "func main()",
+      "start_line": 35,
+      "end_line": 37,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/app.go#L35-L37",
+      "cached_file_sha256": "d2ef3b88ba7f1ad86773acea4b30609b6bfc865a7d37b762a7fa5a582edafa75"
+    },
+    {
+      "id": "GF_SERVE",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "app.go",
+      "symbol": "func serve(",
+      "start_line": 82,
+      "end_line": 124,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/app.go#L82-L124",
+      "cached_file_sha256": "d2ef3b88ba7f1ad86773acea4b30609b6bfc865a7d37b762a7fa5a582edafa75"
+    },
+    {
+      "id": "GF_DB",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "database/database.go",
+      "symbol": "func New(",
+      "start_line": 33,
+      "end_line": 113,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/database/database.go#L33-L113",
+      "cached_file_sha256": "b88bdaa213754d6c56025aaed6951708f0c2b7ca8bce33776d37aa069b9fe8d4"
+    },
+    {
+      "id": "GF_DBCLOSE",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "database/database.go",
+      "symbol": "func (d *GormDatabase) Close(",
+      "start_line": 179,
+      "end_line": 185,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/database/database.go#L179-L185",
+      "cached_file_sha256": "b88bdaa213754d6c56025aaed6951708f0c2b7ca8bce33776d37aa069b9fe8d4"
+    },
+    {
+      "id": "GF_ROUTER",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "router/router.go",
+      "symbol": "func Create(",
+      "start_line": 28,
+      "end_line": 262,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/router/router.go#L28-L262",
+      "cached_file_sha256": "cbd629dd08fd913032e9d7376917966579a6841d89f5bc788e742a555b271b03"
+    },
+    {
+      "id": "GF_TICKER",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "router/router.go",
+      "symbol": "ticker := time.NewTicker",
+      "start_line": 72,
+      "end_line": 87,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/router/router.go#L72-L87",
+      "cached_file_sha256": "cbd629dd08fd913032e9d7376917966579a6841d89f5bc788e742a555b271b03"
+    },
+    {
+      "id": "GF_RUN",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "runner/runner.go",
+      "symbol": "func Run(",
+      "start_line": 21,
+      "end_line": 61,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/runner/runner.go#L21-L61",
+      "cached_file_sha256": "865259a9522653bcb2590ac0e55c58313c4c8dade24f7202306337266950d6eb"
+    },
+    {
+      "id": "GF_SIGNAL",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "runner/runner.go",
+      "symbol": "func doShutdownOnSignal(",
+      "start_line": 63,
+      "end_line": 68,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/runner/runner.go#L63-L68",
+      "cached_file_sha256": "865259a9522653bcb2590ac0e55c58313c4c8dade24f7202306337266950d6eb"
+    },
+    {
+      "id": "GF_NOTIFY",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "runner/runner.go",
+      "symbol": "func doShutdown(",
+      "start_line": 70,
+      "end_line": 77,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/runner/runner.go#L70-L77",
+      "cached_file_sha256": "865259a9522653bcb2590ac0e55c58313c4c8dade24f7202306337266950d6eb"
+    },
+    {
+      "id": "GF_LISTEN",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "runner/runner.go",
+      "symbol": "func startListening(",
+      "start_line": 79,
+      "end_line": 95,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/runner/runner.go#L79-L95",
+      "cached_file_sha256": "865259a9522653bcb2590ac0e55c58313c4c8dade24f7202306337266950d6eb"
+    },
+    {
+      "id": "GF_WS",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "api/stream/stream.go",
+      "symbol": "func (a *API) Handle(",
+      "start_line": 145,
+      "end_line": 160,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/api/stream/stream.go#L145-L160",
+      "cached_file_sha256": "6ff1e2864519b9328eaa21eb19b036c8f5c58bf7227b039f1d96c88dae7c30ee"
+    },
+    {
+      "id": "GF_WSCLOSE",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "api/stream/stream.go",
+      "symbol": "func (a *API) Close(",
+      "start_line": 163,
+      "end_line": 175,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/api/stream/stream.go#L163-L175",
+      "cached_file_sha256": "6ff1e2864519b9328eaa21eb19b036c8f5c58bf7227b039f1d96c88dae7c30ee"
+    },
+    {
+      "id": "GF_CLIENT",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "api/stream/client.go",
+      "symbol": "func (c *client) Close(",
+      "start_line": 45,
+      "end_line": 50,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/api/stream/client.go#L45-L50",
+      "cached_file_sha256": "6e385ae42aa91708d27afc3cb1cffd2d973145b0c5b262bf4082a528c953cd1e"
+    },
+    {
+      "id": "GF_READER",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "api/stream/client.go",
+      "symbol": "func (c *client) startReading(",
+      "start_line": 63,
+      "end_line": 77,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/api/stream/client.go#L63-L77",
+      "cached_file_sha256": "6e385ae42aa91708d27afc3cb1cffd2d973145b0c5b262bf4082a528c953cd1e"
+    },
+    {
+      "id": "GF_WRITER",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "api/stream/client.go",
+      "symbol": "func (c *client) startWriteHandler(",
+      "start_line": 83,
+      "end_line": 108,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/api/stream/client.go#L83-L108",
+      "cached_file_sha256": "6e385ae42aa91708d27afc3cb1cffd2d973145b0c5b262bf4082a528c953cd1e"
+    },
+    {
+      "id": "GF_MESSAGE",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "api/message.go",
+      "symbol": "func (a *MessageAPI) CreateMessage(",
+      "start_line": 363,
+      "end_line": 401,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/api/message.go#L363-L401",
+      "cached_file_sha256": "32c8c8c756cb6f8ff331f56663f65a15c22f6099759afc8150a8b11ec731271d"
+    },
+    {
+      "id": "GF_HEALTH",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "api/health.go",
+      "symbol": "func (a *HealthAPI) Health(",
+      "start_line": 34,
+      "end_line": 46,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/api/health.go#L34-L46",
+      "cached_file_sha256": "4383da961d237c0e03079df46edbb05d80e2f0988e83de3ce445d483c1b58edb"
+    },
+    {
+      "id": "GF_PING",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "database/ping.go",
+      "symbol": "func ",
+      "start_line": 4,
+      "end_line": 10,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/database/ping.go#L4-L10",
+      "cached_file_sha256": "420c3f93ae7b0b814f137d5b0bcd450b589400fbf3feec4ba339079ff5b47449"
+    },
+    {
+      "id": "GF_MOD",
+      "repository": "gotify/server",
+      "revision": "e6361caa512547052b1013dbf4544e6d7ff32604",
+      "path": "go.mod",
+      "symbol": "module ",
+      "start_line": 1,
+      "end_line": 86,
+      "url": "https://github.com/gotify/server/blob/e6361caa512547052b1013dbf4544e6d7ff32604/go.mod#L1-L86",
+      "cached_file_sha256": "14c1ea29abc0785d0bd4d9e01c2a7023e6c8b936f4d1bdc67db1e2043ce495a4"
+    }
+  ],
+  "cache_root": ".cache/repos/gotify-evidence",
+  "cached_paths": [
+    "app.go",
+    "runner/runner.go",
+    "api/stream/stream.go",
+    "go.mod",
+    "database/database.go",
+    "api/stream/client.go",
+    "router/router.go",
+    "api/health.go",
+    "runner/runner_test.go",
+    "database/ping.go",
+    "plugin/manager.go",
+    "api/message.go"
+  ],
+  "dependency_baselines": [
+    {
+      "module": "github.com/gin-gonic/gin",
+      "version": "v1.12.0"
+    },
+    {
+      "module": "github.com/gorilla/websocket",
+      "version": "v1.5.3"
+    },
+    {
+      "module": "github.com/rs/zerolog",
+      "version": "v1.35.1"
+    },
+    {
+      "module": "gorm.io/gorm",
+      "version": "v1.31.2"
+    }
+  ],
+  "go_directive": "1.25.0",
+  "checks_not_run": [
+    "构建与上游测试",
+    "监听失败与运行故障注入",
+    "信号、超时与连接退出",
+    "后台任务结束与依赖释放顺序",
+    "实际平台进程控制与崩溃恢复"
+  ]
+}

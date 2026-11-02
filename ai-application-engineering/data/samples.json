@@ -1,0 +1,164 @@
+{
+  "research_date": "2026-10-30",
+  "timezone": "Asia/Shanghai",
+  "snapshot_type": "default_branch_commit_not_release_tag",
+  "release_note": "GitHub latest release metadata is recorded separately. A tag containing rc remains a release candidate even when prerelease is false.",
+  "samples": [
+    {
+      "repo": "Tencent/WeKnora",
+      "sha": "40192ace214ca046a86b590d69c1fe7286f3423e",
+      "date": "2026-10-29T07:37:07Z",
+      "release": {
+        "repo": "Tencent/WeKnora",
+        "tag": "v0.9.0",
+        "published": "2026-10-29T06:59:12Z",
+        "url": "https://github.com/Tencent/WeKnora/releases/tag/v0.9.0",
+        "prerelease": false
+      },
+      "verified_at": "2026-10-30",
+      "scope": [
+        "README",
+        "license",
+        "selected directories",
+        "commit metadata",
+        "module declaration",
+        "latest release metadata"
+      ],
+      "execution_status": "not_deployed",
+      "role": "complete_product",
+      "language": "Go backend with web frontend",
+      "observed_toolchain": "go 1.26.0",
+      "license_summary": "MIT for main project; third-party components separately listed",
+      "evidence": {
+        "readme": "https://github.com/Tencent/WeKnora/blob/40192ace214ca046a86b590d69c1fe7286f3423e/README.md",
+        "license": "https://github.com/Tencent/WeKnora/blob/40192ace214ca046a86b590d69c1fe7286f3423e/LICENSE",
+        "module": "https://github.com/Tencent/WeKnora/blob/40192ace214ca046a86b590d69c1fe7286f3423e/go.mod",
+        "commit": "https://github.com/Tencent/WeKnora/commit/40192ace214ca046a86b590d69c1fe7286f3423e"
+      }
+    },
+    {
+      "repo": "coze-dev/coze-studio",
+      "sha": "fefb05ff27be1da939612fbf9faf5db62583b8ae",
+      "date": "2026-07-29T03:17:51Z",
+      "message": "fix(infra): align statefulset servicename with actual service name (#2723)",
+      "release": {
+        "repo": "coze-dev/coze-studio",
+        "tag": "v0.5.1",
+        "published": "2026-02-05T06:04:16Z",
+        "url": "https://github.com/coze-dev/coze-studio/releases/tag/v0.5.1",
+        "prerelease": false
+      },
+      "verified_at": "2026-10-30",
+      "scope": [
+        "README",
+        "license",
+        "selected directories",
+        "commit metadata",
+        "module declaration",
+        "latest release metadata"
+      ],
+      "execution_status": "not_deployed",
+      "role": "complete_product",
+      "language": "Go backend; React and TypeScript frontend",
+      "observed_toolchain": "go 1.24.0",
+      "license_summary": "Apache-2.0",
+      "evidence": {
+        "readme": "https://github.com/coze-dev/coze-studio/blob/fefb05ff27be1da939612fbf9faf5db62583b8ae/README.md",
+        "license": "https://github.com/coze-dev/coze-studio/blob/fefb05ff27be1da939612fbf9faf5db62583b8ae/LICENSE-APACHE",
+        "module": "https://github.com/coze-dev/coze-studio/blob/fefb05ff27be1da939612fbf9faf5db62583b8ae/backend/go.mod",
+        "commit": "https://github.com/coze-dev/coze-studio/commit/fefb05ff27be1da939612fbf9faf5db62583b8ae"
+      }
+    },
+    {
+      "repo": "langgenius/dify",
+      "sha": "adcc9a40bdfa5b7c5afb2b54f3efe333855d4541",
+      "date": "2026-10-30T08:32:09Z",
+      "message": "test(api): use caller session for snippet repository delegation (#45143)",
+      "release": {
+        "repo": "langgenius/dify",
+        "tag": "1.18.0",
+        "published": "2026-10-23T06:33:50Z",
+        "url": "https://github.com/langgenius/dify/releases/tag/1.18.0",
+        "prerelease": false
+      },
+      "verified_at": "2026-10-30",
+      "scope": [
+        "README",
+        "license",
+        "selected directories",
+        "commit metadata",
+        "module declaration",
+        "latest release metadata"
+      ],
+      "execution_status": "not_deployed",
+      "role": "complete_product",
+      "language": "Python API with web frontend",
+      "observed_toolchain": "Python ~=3.13.0",
+      "license_summary": "Dify custom license based on Apache-2.0 with additional conditions",
+      "evidence": {
+        "readme": "https://github.com/langgenius/dify/blob/adcc9a40bdfa5b7c5afb2b54f3efe333855d4541/README.md",
+        "license": "https://github.com/langgenius/dify/blob/adcc9a40bdfa5b7c5afb2b54f3efe333855d4541/LICENSE",
+        "module": "https://github.com/langgenius/dify/blob/adcc9a40bdfa5b7c5afb2b54f3efe333855d4541/api/pyproject.toml",
+        "commit": "https://github.com/langgenius/dify/commit/adcc9a40bdfa5b7c5afb2b54f3efe333855d4541"
+      }
+    },
+    {
+      "repo": "infiniflow/ragflow",
+      "sha": "aaa8e05354f1a24256cdc1780bfb938e60c9411e",
+      "date": "2026-10-30T08:48:51Z",
+      "message": "feat(parser): hand off Office images as media refs (#21700)",
+      "release": {
+        "repo": "infiniflow/ragflow",
+        "tag": "v1.0.0-rc2",
+        "published": "2026-10-16T09:49:48Z",
+        "url": "https://github.com/infiniflow/ragflow/releases/tag/v1.0.0-rc2",
+        "prerelease": false
+      },
+      "verified_at": "2026-10-30",
+      "scope": [
+        "README",
+        "license",
+        "selected directories",
+        "commit metadata",
+        "module declaration",
+        "latest release metadata"
+      ],
+      "execution_status": "not_deployed",
+      "role": "complete_product",
+      "language": "Current Go services with web frontend and native dependencies",
+      "observed_toolchain": "go 1.27",
+      "license_summary": "Apache-2.0",
+      "evidence": {
+        "readme": "https://github.com/infiniflow/ragflow/blob/aaa8e05354f1a24256cdc1780bfb938e60c9411e/README.md",
+        "license": "https://github.com/infiniflow/ragflow/blob/aaa8e05354f1a24256cdc1780bfb938e60c9411e/LICENSE",
+        "module": "https://github.com/infiniflow/ragflow/blob/aaa8e05354f1a24256cdc1780bfb938e60c9411e/go.mod",
+        "commit": "https://github.com/infiniflow/ragflow/commit/aaa8e05354f1a24256cdc1780bfb938e60c9411e"
+      }
+    },
+    {
+      "repo": "cloudwego/eino-examples",
+      "sha": "00ad7425513ff231b7467e88f5eeecde3c440bed",
+      "date": "2026-10-27T01:54:45Z",
+      "message": "chore(deps): bump the eino-dependencies group across 3 directories with 1 update (#262)",
+      "release": null,
+      "verified_at": "2026-10-30",
+      "scope": [
+        "README",
+        "license",
+        "selected directories",
+        "commit metadata"
+      ],
+      "execution_status": "not_deployed",
+      "role": "framework_examples",
+      "language": "Go",
+      "observed_toolchain": "Consult each example module before running",
+      "license_summary": "Apache-2.0",
+      "evidence": {
+        "readme": "https://github.com/cloudwego/eino-examples/blob/00ad7425513ff231b7467e88f5eeecde3c440bed/README.md",
+        "license": "https://github.com/cloudwego/eino-examples/blob/00ad7425513ff231b7467e88f5eeecde3c440bed/LICENSE-APACHE",
+        "module": null,
+        "commit": "https://github.com/cloudwego/eino-examples/commit/00ad7425513ff231b7467e88f5eeecde3c440bed"
+      }
+    }
+  ]
+}

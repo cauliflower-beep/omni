@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="五个来自 Uber、Grab、Cockroach Labs 与 Go 官方仓库的并发性能案例：现象、证据、排查工具、解决思路及版本边界。">
+<title>并发与 CPU：五个服务变慢的真实案例</title>
+<style>
+:root {
+  color-scheme: light; --bg:#fffef9; --paper:#fff; --panel:#eef8ff;
+  --ink:#253747; --muted:#576d7c; --line:#d9e8ed; --accent:#137eae;
+  --sky:#dff3ff; --sky-line:#81c6ed; --grass:#e6f5c6; --grass-line:#accf70;
+  --orange:#fff0d7; --orange-line:#efbb72; --code:#edf7ff;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:28px; }
+body { margin:0; background:var(--bg); color:var(--ink); font:16.5px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; -webkit-font-smoothing:antialiased; overflow-wrap:break-word; }
+a { color:var(--accent); text-underline-offset:4px; text-decoration-thickness:1px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+a:focus-visible, summary:focus-visible, .table-wrap:focus-visible, .diagram:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
+.layout { max-width:1232px; margin:0 auto; display:grid; grid-template-columns:186px minmax(0,1fr); gap:62px; padding:36px 40px 76px; }
+aside { position:sticky; top:38px; height:fit-content; max-height:calc(100vh - 70px); overflow-y:auto; scrollbar-width:thin; font-size:13px; line-height:1.85; }
+aside nav { border-left:1px solid var(--line); padding-left:14px; }
+aside a { display:block; color:var(--muted); padding:6px 0; text-decoration:none; }
+aside a:hover { color:var(--accent); }
+aside .back { margin-top:12px; color:var(--accent); }
+main { min-width:0; max-width:860px; }
+.hero { padding:0 0 20px; border-bottom:1px solid var(--line); }
+h1 { font-size:30px; font-weight:650; line-height:1.5; letter-spacing:-.02em; margin:0; }
+section { padding:34px 0 36px; border-bottom:1px solid var(--line); }
+h2 { font-size:22px; font-weight:600; line-height:1.65; margin:0 0 20px; letter-spacing:-.015em; }
+h2 .n { font:400 13px/1.5 ui-monospace,Consolas,monospace; color:var(--accent); margin-right:12px; vertical-align:2px; }
+h3 { font-size:18px; font-weight:600; line-height:1.8; margin:28px 0 10px; }
+h4 { font-size:16px; font-weight:600; line-height:1.8; margin:24px 0 9px; }
+p { margin:14px 0; } strong { font-weight:600; }
+ol,ul { padding-left:1.5em; } li { margin:9px 0; }
+.note,.boundary { margin:23px 0; padding:12px 18px; border-left:3px solid var(--grass-line); background:#f0f9df; font-size:15px; }
+.boundary { background:var(--orange); border-color:var(--orange-line); }
+.source,.meta,figcaption { color:var(--muted); font-size:12px; line-height:1.95; }
+.source a { text-decoration-color:var(--line); }
+.source a:hover { text-decoration-color:var(--accent); }
+.meta { margin:0 0 18px; }
+.table-wrap { overflow-x:auto; margin:23px 0; }
+table { width:100%; border-collapse:collapse; font-size:14px; line-height:1.9; }
+th,td { padding:13px 12px; border-bottom:1px solid var(--line); vertical-align:top; text-align:left; }
+th { font-weight:600; background:var(--sky); border-bottom-color:var(--sky-line); color:#174f6b; }
+tbody tr:nth-child(even) { background:#fffaf0; }
+.numeric { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.best td { background:var(--grass); }
+code { font:.89em/1.65 ui-monospace,SFMono-Regular,Consolas,monospace; background:var(--panel); padding:2px 5px; border-radius:3px; overflow-wrap:anywhere; }
+pre { margin:18px 0; padding:18px 20px; overflow:auto; background:var(--code); color:#243d51; border:1px solid var(--line); border-radius:5px; font-size:13px; line-height:1.85; tab-size:4; }
+pre code { background:none; padding:0; font:inherit; border-radius:0; overflow-wrap:normal; }
+.diagram { background:var(--panel); border:0; border-radius:5px; margin:25px 0; padding:16px; overflow-x:auto; }
+.diagram svg { width:100%; height:auto; display:block; }
+.diagram figcaption { padding:10px 4px 0; }
+svg text { fill:var(--ink); font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+svg .sky { fill:var(--sky); stroke:var(--sky-line); }
+svg .grass { fill:var(--grass); stroke:var(--grass-line); }
+svg .orange { fill:var(--orange); stroke:var(--orange-line); }
+svg .plain { fill:var(--paper); stroke:var(--line); }
+svg .small { font-size:13px; fill:var(--muted); }
+svg .label { font-size:16px; font-weight:600; }
+svg .arrow { fill:none; stroke:#389ac4; stroke-width:1.6; }
+svg .grid { stroke:#c7dfe9; stroke-width:1; }
+svg .tick { font-size:11px; fill:var(--muted); }
+details { margin:23px 0; padding:13px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+summary { font-size:15px; font-weight:500; cursor:pointer; }
+details[open] summary { margin-bottom:16px; }
+.case-link { font-size:14px; margin-top:24px; }
+@media (max-width:1100px) { .layout { grid-template-columns:170px minmax(0,1fr); gap:34px; padding:34px 28px 64px; } aside { top:28px; font-size:12px; } }
+@media (max-width:820px) {
+  .layout { display:block; max-width:760px; padding:24px 24px 54px; }
+  aside { position:static; margin-bottom:27px; max-height:none; overflow:visible; }
+  aside nav { display:flex; flex-wrap:wrap; gap:5px 16px; border-left:0; border-bottom:1px solid var(--line); padding:0 0 17px; }
+  aside a { padding:2px 0; font-size:12px; } aside .back { margin:0; }
+  h1 { font-size:28px; } h2 { font-size:21px; }
+  .diagram svg { min-width:700px; }
+}
+@media (max-width:520px) {
+  body { font-size:16px; } .layout { padding:21px 20px 45px; }
+  h1 { font-size:27px; } h2 { font-size:20px; } h3 { font-size:17px; }
+  section { padding:28px 0 30px; } h2 .n { margin-right:9px; font-size:12px; }
+  .table-wrap table { min-width:620px; } .note,.boundary { padding:10px 14px; font-size:14px; }
+  .diagram { padding:12px; } pre { padding:14px; font-size:12px; }
+}
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print {
+  body { background:#fff; color:#202020; font-size:11pt; }
+  .layout { display:block; padding:0; max-width:none; } aside { display:none; } main { max-width:none; }
+  h1 { font-size:22pt; } h2 { font-size:15pt; break-after:avoid; } h3 { font-size:12pt; break-after:avoid; }
+  h4 { font-size:11pt; break-after:avoid; } pre { white-space:pre-wrap; font-size:9pt; } pre code { white-space:pre-wrap; }
+  .diagram,.table-wrap { overflow:visible; } .diagram svg,.table-wrap table { min-width:0; }
+  section { padding:24px 0; } a { color:#333; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside aria-label="文章导航"><nav>
+<a href="#overview">00 · 先分清三个量</a>
+<a href="#uber">01 · Uber：CPU 配额</a>
+<a href="#mutex">02 · RPC：锁竞争</a>
+<a href="#grab">03 · Grab：自动缩容</a>
+<a href="#cockroach">04 · 备份拖慢在线查询</a>
+<a href="#streaming">05 · 流媒体：调度开销</a>
+<a href="#investigation">06 · 实际排查怎么走</a>
+<a href="#references">来源与版本</a>
+<a class="back" href="../gmp-scheduler.html#value">返回 GMP 调度模型 ↗</a>
+</nav></aside>
+<main>
+<header class="hero"><h1>并发与 CPU：五个服务变慢的真实案例</h1></header>
+
+<section id="overview">
+<h2><span class="n">00</span>先分清：任务有多少，能并行多少，CPU 给多少</h2>
+<p>增加 worker、提高 GOMAXPROCS、调整容器 CPU，改变的是不同的量。下面五个案例分别遇到了<strong>CPU 节流、锁交接、执行并行度下降、前后台资源争用和调度开销</strong>；相似的“服务变慢”，需要不同的证据。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="并发性能相关的三个量"><table>
+<thead><tr><th>量</th><th>控制什么</th><th>不会自动获得什么</th></tr></thead>
+<tbody>
+<tr><td>业务并发度</td><td>同时进入某段处理流程的任务数；可用 worker、信号量或准入队列限制。</td><td>更多 CPU 时间；更快的数据库、锁或下游。</td></tr>
+<tr><td>GOMAXPROCS</td><td>P 的数量；约束同时执行普通 Go 代码的并行度。</td><td>独占的物理核心；整个进程的线程数上限。</td></tr>
+<tr><td>CPU 带宽配额</td><td>cgroup 在一段周期内允许使用的累计 CPU 时间。</td><td>对等数量的专属核心；进程内部的业务优先级。</td></tr>
+</tbody></table></div>
+<p>可以把它们分别想成“接了多少单”“开了多少工作台”“每天获准使用多少工时”。多接单、多开工作台，都可能只是增加排队和争抢。回到准确含义：<strong>等待中的 G 不等于可运行的 G；P 也不等于 CPU 核心。</strong></p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="五个案例索引"><table>
+<thead><tr><th>案例</th><th>最值得追问的现象</th><th>关键证据</th></tr></thead>
+<tbody>
+<tr><td><a href="#uber">Uber 负载均衡器</a></td><td>P 增加，吞吐下降，长尾延迟上升。</td><td>GOMAXPROCS 对照测试、cgroup 节流计数。</td></tr>
+<tr><td><a href="#mutex">HTTP/RPC 锁竞争</a></td><td>参与计算和争锁的并发度只增加一点，吞吐却骤降。</td><td>并发度扫描、trace 中的锁交接时间。</td></tr>
+<tr><td><a href="#grab">Grab Kafka → S3</a></td><td>CPU 配置跨过整数边界后，消费积压。</td><td>VPA 时间线、有效 P 数与消费速率。</td></tr>
+<tr><td><a href="#cockroach">CockroachDB 备份</a></td><td>后台工作运行时，在线查询变慢。</td><td>请求追踪、runnable → running 的延迟。</td></tr>
+<tr><td><a href="#streaming">UDP 流媒体服务</a></td><td>相同业务负载，升级工具链后 CPU 增加。</td><td>交叉编译对照、CPU profile、schedtrace。</td></tr>
+</tbody></table></div>
+<p class="source">每节的“原始记录”是来源摘要；“迁移到自己的服务”是本文补充的排查建议。原帖数据、作者假设与本文示意分别标明；本页没有把历史案例重新运行为本机实验。原理见 <a href="../gmp-scheduler.html#model">G、M、P</a>；取证工具见 <a href="https://go.dev/doc/diagnostics">Go 官方诊断指南</a>。</p>
+</section>
+
+<section id="uber">
+<h2><span class="n">01</span>Uber：P 增加了，CPU 时间却没有增加</h2>
+<p class="meta">来源：<a href="https://github.com/uber-go/automaxprocs#performance">uber-go/automaxprocs · Performance</a>。真实内部负载均衡器的对照测试；README 未注明该组数据的 Go 版本、测试日期及完整压测配置。</p>
+<h3>1.1 原始记录：2 核配额下的六组结果</h3>
+<p>Uber 固定 CPU 配额为 200%（相当于 2 核的 CPU 时间预算），改变 GOMAXPROCS。P=2 时吞吐最高；继续加 P，P50 虽然降低，吞吐和长尾延迟却变差。原作者还检查了 <code>cpu.stat</code>，并报告：调低到与配额匹配后，这次测试中未再观察到 CPU 节流。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Uber 原始测试数据"><table>
+<thead><tr><th>GOMAXPROCS</th><th>RPS ↑</th><th>P50 / ms ↓</th><th>P99.9 / ms ↓</th></tr></thead>
+<tbody>
+<tr><td>1</td><td class="numeric">28,893.18</td><td class="numeric">1.46</td><td class="numeric">19.70</td></tr>
+<tr class="best"><td>2（与配额匹配）</td><td class="numeric">44,715.07</td><td class="numeric">0.84</td><td class="numeric">26.38</td></tr>
+<tr><td>3</td><td class="numeric">44,212.93</td><td class="numeric">0.66</td><td class="numeric">30.07</td></tr>
+<tr><td>4</td><td class="numeric">41,071.15</td><td class="numeric">0.57</td><td class="numeric">42.94</td></tr>
+<tr><td>8</td><td class="numeric">33,111.69</td><td class="numeric">0.43</td><td class="numeric">64.32</td></tr>
+<tr><td>24（当时默认值）</td><td class="numeric">22,191.40</td><td class="numeric">0.45</td><td class="numeric">76.19</td></tr>
+</tbody></table></div>
+<figure class="diagram" tabindex="0" aria-label="Uber 吞吐与长尾延迟图表，可横向滚动">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" role="img" aria-labelledby="uber-chart-title uber-chart-desc">
+<title id="uber-chart-title">Uber：同一 CPU 配额，不同 P 数</title>
+<desc id="uber-chart-desc">左右图分别为 RPS 和 P99.9 毫秒，使用独立刻度。P 等于 2 时 RPS 为 44715.07，P 等于 24 时为 22191.40；对应 P99.9 从 26.38 毫秒升为 76.19 毫秒。全部六组数据见紧邻的表格。</desc>
+<text x="24" y="25" class="small">P 数</text><text x="100" y="25" class="label">吞吐 RPS ↑</text><text x="490" y="25" class="label">P99.9 / ms ↓</text>
+<path class="grid" d="M100 44V284 M212 44V284 M324 44V284 M490 44V284 M590 44V284 M690 44V284"/>
+<text x="100" y="307" class="tick">0</text><text x="202" y="307" class="tick">20k</text><text x="314" y="307" class="tick">40k</text>
+<text x="490" y="307" class="tick">0</text><text x="583" y="307" class="tick">40</text><text x="683" y="307" class="tick">80</text>
+<g font-size="13">
+<text x="30" y="66">1</text><rect x="100" y="49" width="161.80" height="24" rx="4" fill="#9ad8f7"/><text x="269.8" y="66">28,893</text><rect x="490" y="49" width="49.25" height="24" rx="4" fill="#ffd08d"/><text x="547.25" y="66">19.70</text>
+<text x="30" y="106">2</text><rect x="100" y="89" width="250.40" height="24" rx="4" fill="#acd967"/><text x="358.40" y="106">44,715</text><rect x="490" y="89" width="65.95" height="24" rx="4" fill="#acd967"/><text x="563.95" y="106">26.38</text>
+<text x="30" y="146">3</text><rect x="100" y="129" width="247.59" height="24" rx="4" fill="#9ad8f7"/><text x="355.59" y="146">44,213</text><rect x="490" y="129" width="75.18" height="24" rx="4" fill="#ffd08d"/><text x="573.18" y="146">30.07</text>
+<text x="30" y="186">4</text><rect x="100" y="169" width="230.00" height="24" rx="4" fill="#9ad8f7"/><text x="338" y="186">41,071</text><rect x="490" y="169" width="107.35" height="24" rx="4" fill="#ffd08d"/><text x="605.35" y="186">42.94</text>
+<text x="30" y="226">8</text><rect x="100" y="209" width="185.43" height="24" rx="4" fill="#9ad8f7"/><text x="293.43" y="226">33,112</text><rect x="490" y="209" width="160.80" height="24" rx="4" fill="#ffd08d"/><text x="658.80" y="226">64.32</text>
+<text x="30" y="266">24</text><rect x="100" y="249" width="124.27" height="24" rx="4" fill="#9ad8f7"/><text x="232.27" y="266">22,191</text><rect x="490" y="249" width="190.48" height="24" rx="4" fill="#ffd08d"/><text x="688.48" y="266">76.19</text>
+</g></svg>
+<figcaption>按原始表格重绘；RPS 图中数值四舍五入到整数，精确值见上表。两个面板各自从零起算，绿色标记 P=2，不表示它在所有指标上都最好。</figcaption>
+</figure>
+<h3>1.2 为什么会这样：并行度与带宽是两种限制</h3>
+<p>GOMAXPROCS 允许更多普通 Go 代码同时执行；cgroup 配额限制这些执行累计能用多久。假设一个周期为 100ms、配额为 200ms CPU 时间：理论上，2 个线程各执行 100ms，或 8 个线程各执行 25ms，都能耗尽同一笔预算。后一种方式可能更早耗尽配额，随后等待补充。</p>
+<p>这是<strong>理想化预算示意</strong>：忽略其他线程、内核细节、CPU 竞争与 burst 配置，不是 Uber 的原始时间线。它解释了为什么“短时间跑得更并行”与“持续吞吐更高”不能画等号。调度器即使有 runnable G，也不能替操作系统突破 CPU 带宽限制。</p>
+<p class="source">机制依据：<a href="https://docs.kernel.org/scheduler/sched-bwc.html">Linux CFS Bandwidth Control</a>。GOMAXPROCS 的限制针对普通 Go 代码，cgroup 预算还会受到同组其他执行活动影响。</p>
+<h3>1.3 迁移到自己的服务：怎样确认是配额问题？</h3>
+<ol>
+<li><strong>先取实际值。</strong>记录运行中进程的 Go 版本、GOMAXPROCS、容器 CPU limit 及 cpuset；不要把宿主机 NumCPU 当成容器可持续使用的 CPU 带宽。</li>
+<li><strong>看节流的时间变化。</strong>读取目标 cgroup 的 <code>cpu.stat</code>，对比固定窗口内节流次数与节流时间的增量，并与 P99、吞吐对齐。累计值很大，只能说明过去发生过节流。</li>
+<li><strong>做单变量对照。</strong>保持流量模型、CPU limit、实例数和请求内容一致，逐档改变 P；同时记录成功 RPS、超时、P50/P99 和 CPU 秒/请求。不要一边扩容一边改 P，再归因于其中一项。</li>
+</ol>
+<p>若节流与延迟上升同步，降低 P 后节流和长尾改善，才形成较完整的证据。也可能需要增加配额或减少计算量。<strong>P=1 的 P99.9 更低，但吞吐也更低</strong>，最终选择由吞吐目标和延迟目标共同决定。</p>
+<div class="boundary"><strong>版本边界：</strong>Go 1.25 引入 Linux 容器 CPU 带宽感知和默认值更新机制。实际行为受工具链、模块语言版本、GODEBUG、GOMAXPROCS 环境变量和显式 API 调用影响。先确认生效配置；不能直接推导“每个 Go 容器都该安装 automaxprocs”或“P 永远等于 CPU limit”。<a href="https://go.dev/blog/container-aware-gomaxprocs">官方说明</a></div>
+<p class="case-link">回到原理：<a href="../gmp-scheduler.html#model">P 与 CPU 的区别</a> · 实际命令：<a href="#cgroup">检查 cgroup</a></p>
+</section>
+
+<section id="mutex">
+<h2><span class="n">02</span>RPC：短临界区，也可能把服务拖进拥塞</h2>
+<p class="meta">来源：<a href="https://github.com/golang/go/issues/33747">golang/go #33747</a>，2019-08。线上 HTTP/RPC 服务的观察，加上独立微基准；测试版本为 Go 1.8.7、1.9.7、1.12.7、1.13beta1。</p>
+<h3>2.1 原始记录：只多一个并发参与者，吞吐却大幅下降</h3>
+<p>报告者的服务接收 HTTP 请求，调用下游、等待响应，再执行计算；线上曾出现突然加剧的锁竞争。为复现，作者在 96 逻辑 CPU 的机器上，固定每项工作约 350μs、临界区约占 1%，扫描并发度。Go 1.9 的结果出现明显断崖：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="锁竞争历史基准的近似结果"><table>
+<thead><tr><th>并发度</th><th>吞吐 / 单并发吞吐</th><th>数据性质</th></tr></thead>
+<tbody>
+<tr><td>45</td><td>约 38 倍</td><td rowspan="3">Go 1.9 的历史微基准，来源正文中的近似描述；不是线上 RPS。</td></tr>
+<tr><td>46</td><td>约 12 倍</td></tr>
+<tr><td>51</td><td>约 6 倍</td></tr>
+</tbody></table></div>
+<p>trace 显示，崩塌时从一次 <code>Unlock</code> 开始到下一位等待者的 <code>Lock</code> 即将返回，交接约需 60–70μs。作者还测试了解锁后显式 Gosched，并在后续评论中报告运行时补丁 <a href="https://go.dev/cl/200577">CL 200577</a> 改善了该基准的崩塌。</p>
+<p><strong>为什么不是一次内存操作的耗时？</strong>这里量的是完整锁交接：同步机制处理、等待者变为就绪、排队获得执行机会及恢复执行，都可能计入其中。多核缓存一致性与 OS 调度也可能影响成本，但原帖没有拆分各项贡献，不能直接把 60–70μs 归因于缓存行争用或内核唤醒。尤其要分清：<strong>唤醒 G，不一定需要唤醒休眠的 OS 线程。</strong></p>
+<div class="note"><strong>“并发度”不是总 goroutine 数。</strong>贴出的基准代码创建 <code>4 × GOMAXPROCS</code> 个 worker，再通过信号量限制进入计算和争锁循环的数量。该硬件配置下总 worker 可为 384，而信号量上限分别为 45、46 等。对照实验改变的是<strong>参与工作的并发上限</strong>。见 <a href="https://github.com/golang/go/issues/33747#issuecomment-524054576">作者对代码的澄清</a>。</div>
+<h3>2.2 调度与锁，怎样一起放大问题？</h3>
+<p>一把共享锁一次只允许一个持有者推进。持锁计算结束后，下一个等待者还需要被交接、恢复并真正开始执行；这段成本可能大于原本很短的临界区。更多参与者会增加竞争，却不会让那段串行工作变成并行。</p>
+<figure class="diagram" tabindex="0" aria-label="并发拥塞的反馈过程示意，可横向滚动">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 210" role="img" aria-labelledby="lock-title lock-desc">
+<title id="lock-title">在途请求与锁竞争的正反馈</title>
+<desc id="lock-desc">在到达速率未下降且缺少有效准入控制时，更多在途请求可能增加共享锁竞争，拉长完成时间，又使更多请求滞留。该图是机制示意，不是原帖监控数据。</desc>
+<defs><marker id="lock-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#389ac4"/></marker></defs>
+<rect class="sky" x="20" y="30" width="210" height="84" rx="6"/><text x="125" y="62" text-anchor="middle" class="label">更多在途请求</text><text x="125" y="90" text-anchor="middle" class="small">并发参与计算和争锁</text>
+<rect class="orange" x="275" y="30" width="210" height="84" rx="6"/><text x="380" y="62" text-anchor="middle" class="label">共享锁竞争加剧</text><text x="380" y="90" text-anchor="middle" class="small">排队、交接与恢复成本</text>
+<rect class="grass" x="530" y="30" width="210" height="84" rx="6"/><text x="635" y="62" text-anchor="middle" class="label">请求完成得更慢</text><text x="635" y="90" text-anchor="middle" class="small">原有请求更久才离开系统</text>
+<path class="arrow" marker-end="url(#lock-arrow)" d="M230 72H270 M485 72H525 M635 114V158H125V119"/>
+<text x="380" y="191" text-anchor="middle" class="small">补充示意：到达速率未下降、缺少有效准入控制时，拥塞可能自我放大。</text>
+</svg><figcaption>图中的反馈是排查假设，需要用请求到达率、在途数量、锁等待和完成率验证；不是所有锁竞争都会形成同样的崩塌。</figcaption></figure>
+<p>Go Mutex 的公平性策略与 G 的 park、ready、再次调度会影响交接。原帖评论对“饥饿模式为何持续”的解释包含明确标注的<strong>未验证假设</strong>，不能写成对每次线上故障都成立的根因。实际排障首先要定位竞争的是哪把锁、由谁持有、交接中慢在哪里。</p>
+<h3>2.3 迁移到自己的服务：先定位锁，再决定怎么限并发</h3>
+<ol>
+<li><strong>画出吞吐随并发度的曲线。</strong>固定 P、CPU 配额和请求分布，逐档增加在途上限，记录吞吐、P99、在途数和错误率。区分正常收益递减与突然下跌。</li>
+<li><strong>用 mutex profile 找竞争来源。</strong>它把等待成本归到引起竞争的持锁者、通常是解锁路径的调用栈；不能把热点栈直接理解成“这个函数本身计算了这么久”。配合 goroutine 栈确认等待者。</li>
+<li><strong>用短 trace 拆时间。</strong>区分同步阻塞、被唤醒后的 runnable 等待、真正执行；需要时在自己的关键流程加 trace region。CPU profile 只看消耗 CPU 的部分，不能单独量出所有锁等待。</li>
+</ol>
+<p>确认瓶颈后，可以缩短临界区、按 key 分片、批量合并更新或改为局部聚合，并在共享资源入口设置有界并发。若限制并发有效，还要计入<strong>入口排队、拒绝和超时</strong>：不能只让已被接纳的请求看起来更快，把等待藏到队列外。</p>
+<p>验证时保持相同到达压力，比较整体成功吞吐和端到端延迟；同时再跑一次饱和压测，确认容量变化。若是在有限任务批处理中，固定总任务量和结果，再比较总完成时间。</p>
+<div class="boundary"><strong>历史修复不能漏掉。</strong>报告者在 <a href="https://github.com/golang/go/issues/33747#issuecomment-542812362">补丁验证评论</a> 中确认 CL 200577 改善了当时的测试。这个案例说明怎样取证和理解竞争，不证明 Go 1.23.4 或当前版本仍有同一缺陷；也不支持给所有 Unlock 后面添加 Gosched。</div>
+<p class="source">工具语义：<a href="https://pkg.go.dev/runtime/pprof#hdr-Mutex_profile">Mutex profile</a>；一般性处理建议为本文补充，不是原作者已经部署并验证的修复清单。</p>
+<p class="case-link">回到原理：<a href="../gmp-scheduler.html#queues">waiting 与 runnable</a> · <a href="../gmp-scheduler.html#gosched">Gosched 的作用与边界</a> · 实际命令：<a href="#profiles">抓取 profile 与 trace</a></p>
+</section>
+
+<section id="grab">
+<h2><span class="n">03</span>Grab：2.05 核变成 1.94 核，消费能力为何跳变？</h2>
+<p class="meta">来源：<a href="https://engineering.grab.com/performance-bottlenecks-go-apps">Grab 工程博客</a>，2023-05-23。Kafka → S3 的真实流水线；原文没有给出完整工具链版本和全部资源配置。</p>
+<h3>3.1 原始记录：代码没改，Kafka lag 却涨了</h3>
+<p>Grab 的 SinktoS3 流水线用多个 worker 并行执行计算密集工作，原本改善了消费能力。随后 VPA 将 CPU 配置从 2.5 核逐步调到 2.05、1.94 核；跨到 2 核以下后，消费速率明显下降并积压。团队对齐资源、CPU 与消费曲线，把 VPA 最小 CPU 配置设回 2 核后，处理能力恢复。</p>
+<p>原文将原因关联到其使用的自动 GOMAXPROCS 配置：非整数配额向下取整，P 因而可能从 2 变为 1。<strong>资源数值只小幅变化，程序的并行名额却发生整数跳变。</strong></p>
+<figure class="diagram" tabindex="0" aria-label="CPU 配额取整对并行度的影响示意，可横向滚动">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" role="img" aria-labelledby="grab-title grab-desc">
+<title id="grab-title">Grab 案例中的整数边界</title>
+<desc id="grab-desc">按原文所述向下取整策略，2.05 核对应两个 P，1.94 核对应一个 P；恢复到 2 核后又有两个 P。此图是配置关系重绘，不是连续监控曲线。</desc>
+<rect class="sky" x="20" y="20" width="220" height="184" rx="6"/><text x="130" y="53" text-anchor="middle" class="label">CPU 配置 2.05 核</text><text x="130" y="81" text-anchor="middle" class="small">原文所述向下取整</text>
+<rect class="grass" x="56" y="103" width="66" height="43" rx="5"/><rect class="grass" x="138" y="103" width="66" height="43" rx="5"/><text x="89" y="130" text-anchor="middle">P0</text><text x="171" y="130" text-anchor="middle">P1</text><text x="130" y="182" text-anchor="middle" class="small">两个普通 Go 执行名额</text>
+<rect class="orange" x="270" y="20" width="220" height="184" rx="6"/><text x="380" y="53" text-anchor="middle" class="label">CPU 配置 1.94 核</text><text x="380" y="81" text-anchor="middle" class="small">跨过整数边界</text>
+<rect class="grass" x="306" y="103" width="66" height="43" rx="5"/><rect class="plain" x="388" y="103" width="66" height="43" rx="5" stroke-dasharray="4 3"/><text x="339" y="130" text-anchor="middle">P0</text><text x="421" y="130" text-anchor="middle" class="small">无 P1</text><text x="380" y="182" text-anchor="middle" class="small">一个普通 Go 执行名额</text>
+<rect class="grass" x="520" y="20" width="220" height="184" rx="6"/><text x="630" y="53" text-anchor="middle" class="label">最小配置恢复 2 核</text><text x="630" y="81" text-anchor="middle" class="small">该流水线的处理能力恢复</text>
+<rect class="sky" x="556" y="103" width="66" height="43" rx="5"/><rect class="sky" x="638" y="103" width="66" height="43" rx="5"/><text x="589" y="130" text-anchor="middle">P0</text><text x="671" y="130" text-anchor="middle">P1</text><text x="630" y="182" text-anchor="middle" class="small">重新允许两个名额</text>
+<text x="380" y="233" text-anchor="middle" class="small">示意针对原文的配置策略；CPU 带宽与 P 数不构成连续的一一对应关系。</text>
+</svg><figcaption>配置关系按原文重绘。Go 1.25 的容器默认策略与原文使用的向下取整策略不同，不能用该图预测所有版本。</figcaption></figure>
+<h3>3.2 为什么 CPU 使用率降低，不代表系统更轻松？</h3>
+<p>一个纯计算阶段若只能同时执行一份普通 Go 工作，即使 CPU 带宽预算接近两核，它也未必能把预算吃满。这时可能同时出现“CPU 使用下降”和“队列积压增加”。如果只盯着 CPU 百分比，自动化系统或人都可能误判为资源仍有富余。</p>
+<p>这是根据 P 数限制所作的解释；真实流水线还有 I/O、GC 和各阶段并发配置。原文部分段落把 CPU requests、limits、GOMAXPROCS 与 throttling 的关系说得过于笼统：<strong>P=1 导致计算并行度不足，与 cgroup 真正耗尽带宽而被节流，是两个需要分别测量的问题。</strong>不能仅凭 Kafka lag 或低 CPU 就宣布发生了节流。</p>
+<h3>3.3 迁移到自己的服务：把资源变化和处理能力放到同一条时间线上</h3>
+<ol>
+<li><strong>对齐三组记录。</strong>Kafka 输入/消费速率和 lag；VPA recommendation 与实际生效的 requests/limits；进程启动、重启及运行中的有效 GOMAXPROCS。确认跨过边界时 P 是否真的变化，还是仅仅配额改变。</li>
+<li><strong>检查资源实际在哪里生效。</strong>VPA 建议值、Pod 配置和进程所属 cgroup 的限制可能处于不同阶段；同时核对 cpuset 和父层限制。CPU request 是调度及争用分配的依据之一，不能直接当成执行上限。</li>
+<li><strong>区分限制。</strong>若 P 从 2 变成 1，先检查计算阶段能否并行；若 P 未变而 throttling 增加，走配额路径；若大量任务在等 S3 或内部队列，再查等待和下游。</li>
+</ol>
+<p>针对确认的原因，为重负载流水线设置合适的最小资源与并行度，并明确自动配置的更新方式。验证不能只看“积压终于清掉”：还要看消费速率能否持续覆盖输入、单位消息 CPU 成本及稳定期延迟，避免补偿性追赶掩盖长期容量不足。</p>
+<div class="boundary"><strong>边界：</strong>本例中 worker 原本已经带来收益，资源调整又削弱了可用执行能力。Go 1.25 引入的 CPU limit 取整采用向上取整；默认 P 通常不低于 2，除非逻辑 CPU 数或 CPU 亲和性允许的数量小于 2。显式设置也会影响默认更新。见 <a href="https://go.dev/blog/container-aware-gomaxprocs">容器默认行为说明</a> 与 <a href="https://pkg.go.dev/runtime#GOMAXPROCS">GOMAXPROCS 的具体规则</a>；不能把“至少 2 核”推广成所有 Go 服务的要求。</div>
+<p class="case-link">回到原理：<a href="../gmp-scheduler.html#model">单 P 下的并发与并行</a> · 对照案例：<a href="#uber">P 过多时的配额问题</a></p>
+</section>
+
+<section id="cockroach">
+<h2><span class="n">04</span>CockroachDB：后台工作，消耗了在线请求的响应预算</h2>
+<p class="meta">来源：<a href="https://www.cockroachlabs.com/blog/rubbing-control-theory/">Cockroach Labs · Rubbing control theory on the Go scheduler</a>，2022-12-15。生产数据库中的混合负载问题，配合受控压测和运行时插桩分析；不是一份逐分钟的线上事故报告。</p>
+<h3>4.1 原始记录：备份期间，前台长尾变差</h3>
+<p>CockroachDB 的在线查询与备份、扫描等工作共享执行资源。团队在前后台混合负载中观察到长尾恶化，平均 runnable 数未直接揭示原因。抽样请求追踪和调度指标进一步暴露等待；修改 RPC 插桩及运行时后，确认部分未解释的时间实际花在 runnable 状态。最终采用以调度延迟反馈的后台 CPU 准入控制，精细计量依赖定制运行时。</p>
+<h3>4.2 请求不是只排一次队</h3>
+<p>一个请求可能经历：处理入站消息、发起 RPC、等待响应、恢复后处理结果。每次由另一个 G 接棒，都可能重新经历“已就绪，等执行”。即使网络传输很快、每个处理函数的计算没有变，这些等待仍可能累积为明显的端到端延迟。</p>
+<figure class="diagram" tabindex="0" aria-label="在线请求中多次调度等待的时间线示意，可横向滚动">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 280" role="img" aria-labelledby="crdb-title crdb-desc">
+<title id="crdb-title">请求路径中的 runnable 等待</title>
+<desc id="crdb-desc">示意请求 G 收到任务后先等执行，再进行计算和 RPC 等待；响应到达后，接棒的 G 又等待执行。橙色是已经就绪但未运行，蓝色是外部等待，绿色是真正执行；宽度没有数值含义。</desc>
+<text x="24" y="28" class="small">请求路径：就绪并不等于马上执行</text>
+<text x="24" y="74" class="small">入站 G</text><rect class="orange" x="124" y="49" width="145" height="42" rx="4"/><text x="196.5" y="76" text-anchor="middle" font-size="14">runnable 等执行</text><rect class="grass" x="276" y="49" width="100" height="42" rx="4"/><text x="326" y="76" text-anchor="middle" font-size="14">计算</text><rect class="sky" x="383" y="49" width="130" height="42" rx="4"/><text x="448" y="76" text-anchor="middle" font-size="14">RPC 等响应</text>
+<path class="arrow" d="M513 70H535V126"/><text x="549" y="111" class="small">响应到达</text>
+<text x="24" y="155" class="small">接棒 G</text><rect class="orange" x="535" y="131" width="125" height="42" rx="4"/><text x="597.5" y="158" text-anchor="middle" font-size="14">再等执行</text><rect class="grass" x="667" y="131" width="70" height="42" rx="4"/><text x="702" y="158" text-anchor="middle" font-size="14">计算</text>
+<rect class="grass" x="124" y="204" width="18" height="18" rx="3"/><text x="151" y="218" class="small">真正运行</text><rect class="orange" x="292" y="204" width="18" height="18" rx="3"/><text x="319" y="218" class="small">就绪后排队</text><rect class="sky" x="488" y="204" width="18" height="18" rx="3"/><text x="515" y="218" class="small">外部条件未满足</text>
+<text x="380" y="259" text-anchor="middle" class="small">本文概念示意；色块宽度不代表原文时长，也不表示所有请求采用这套 G 分工。</text>
+</svg><figcaption>请求时长需要沿真实路径拆分。多个阶段的 P99 不能直接相加得到请求 P99；应观察整条请求及相关 G 的实际时间线。</figcaption></figure>
+<p>Go 调度器并不知道哪段业务是“客户正在等的查询”，哪段是“可以晚一点的后台扫描”。抢占让其他任务有机会推进，但它不提供业务优先级与延迟 SLO，也不保证一个请求在每次接棒时都能立刻运行。</p>
+<h3>4.3 迁移到自己的服务：把“CPU 忙”变成可验证的解释</h3>
+<ol>
+<li><strong>先做可控干预。</strong>固定前台压力，分别暂停、限速和恢复后台任务，比较在线延迟。关联只负责提出怀疑，干预负责进一步检验。</li>
+<li><strong>沿请求追踪定位空白。</strong>确认时间是消耗在 SQL、网络、锁，还是就绪后等 CPU。分布式 tracing 帮助定位阶段，Go execution trace 帮助解释进程内部 G 的状态；它们不是同一种 trace。</li>
+<li><strong>看调度延迟分布。</strong><code>/sched/latencies:seconds</code> 记录就绪后等待运行的时间。比较故障窗口与正常窗口的分布，同时检查 CPU 配额与节流；调度延迟高本身还不能区分是后台竞争还是外部 CPU 限制。</li>
+<li><strong>防止平均值掩盖局部等待。</strong>总 CPU、平均 runnable 数和单个函数耗时都正常，不足以排除某段请求链路经历了较长调度等待。</li>
+</ol>
+<p>一般服务可先为后台工作设置独立的有界队列、并发上限和处理速率，按小批次推进，必要时分进程或实例隔离；准入等待放在<strong>尚未持有前台依赖的锁或其他稀缺资源</strong>的位置。再用在线 SLO、后台完成进度和 CPU 利用率共同验证，避免把后台工作一直饿住。</p>
+<div class="boundary"><strong>不要只补 Gosched。</strong>让出后仍是 runnable，下一轮仍会争取执行；它不限制后台工作累计吃掉的 CPU 时间。CockroachDB 的精细方案还包含控制器、预算分配与定制运行时能力。本文的普通服务建议不声称能复现其全部效果。也不能将某个调度延迟阈值当成所有服务的通用标准。</div>
+<p class="source">度量语义：<a href="https://pkg.go.dev/runtime/metrics">runtime/metrics</a>。直方图通常是进程生命周期累计值，窗口分布需要对同一桶边界做计数差分；分位值不能通过“前后 P99 相减”得到。</p>
+<p class="case-link">实际读取：<a href="#scheduler-metrics">调度延迟的窗口直方图与 P99 桶</a>。</p>
+<p class="case-link">回到原理：<a href="../gmp-scheduler.html#preemption">异步抢占</a> · <a href="../gmp-scheduler.html#diagnose">CPU 热点与调度等待的区别</a></p>
+</section>
+
+<section id="streaming">
+<h2><span class="n">05</span>流媒体：忙于找工作，也是一种 CPU 开销</h2>
+<p class="meta">来源：<a href="https://github.com/golang/go/issues/28808">golang/go #28808</a>，2018-11。真实 UDP 流媒体应用的升级压测，以及简化复现程序；主要对照 Go 1.9 与 Go 1.11，Linux/amd64。</p>
+<h3>5.1 原始记录：业务代码没变，CPU 却增加</h3>
+<p>服务通过 HTTP 从本地缓存取数据，再以目标码率用 UDP 发送。每个会话由 ticker 周期唤醒发送 G，典型运行约 15μs、周期约 2.4ms。56 逻辑 CPU 的节点上运行 5 个实例；升级 Go 后，相同负载更耗 CPU。用旧业务代码重新编译也出现变化，缩小了问题范围。</p>
+<p>CPU profile 指向 <code>findrunnable</code> 和工作窃取，schedtrace 又显示大量空闲队列。报告者将各进程 GOMAXPROCS 从 56 调至 12 后，对照压测的 CPU 消耗回到接近原水平。</p>
+<h3>5.2 大量空队列，为什么不等于没有成本？</h3>
+<p>短任务反复经历唤醒、执行、查找下一项工作和休眠，调度成本可能在每次很少的有效计算之外反复支付。较多 P 意味着潜在的查找范围更大；同机多个进程还各自运行一套调度器。原报告的解释是：定时器瓶颈缓解后，工作窃取开销变得突出。这属于其数据支持的历史问题分析，不是当前运行时所有负载的复杂度结论。</p>
+<figure class="diagram" tabindex="0" aria-label="短任务的工作与调度开销示意，可横向滚动">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 215" role="img" aria-labelledby="stream-title stream-desc">
+<title id="stream-title">短任务反复支付调度成本</title>
+<desc id="stream-desc">每轮唤醒一个 G，执行少量业务，然后寻找下一项工作，若没有可运行任务则休眠。多个 P 可同时查找工作。图仅展示步骤，不表示各步骤耗时比例。</desc>
+<defs><marker id="stream-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#389ac4"/></marker></defs>
+<rect class="sky" x="20" y="30" width="155" height="76" rx="6"/><text x="97.5" y="61" text-anchor="middle" class="label">定时器唤醒</text><text x="97.5" y="87" text-anchor="middle" class="small">G 变为 runnable</text>
+<rect class="grass" x="205" y="30" width="155" height="76" rx="6"/><text x="282.5" y="61" text-anchor="middle" class="label">执行少量业务</text><text x="282.5" y="87" text-anchor="middle" class="small">发送当前数据包</text>
+<rect class="orange" x="390" y="30" width="155" height="76" rx="6"/><text x="467.5" y="61" text-anchor="middle" class="label">寻找下一项工作</text><text x="467.5" y="87" text-anchor="middle" class="small">检查队列、尝试窃取</text>
+<rect class="sky" x="575" y="30" width="165" height="76" rx="6"/><text x="657.5" y="61" text-anchor="middle" class="label">无工作时休眠</text><text x="657.5" y="87" text-anchor="middle" class="small">稍后又被唤醒</text>
+<path class="arrow" marker-end="url(#stream-arrow)" d="M175 68H200 M360 68H385 M545 68H570 M657 106V153H97V111"/>
+<text x="380" y="191" text-anchor="middle" class="small">概念示意：相对很短的有效工作，可能伴随反复支付的运行时开销。</text>
+</svg><figcaption>色块等宽用于排列步骤，不是耗时比例图。工作窃取是调度器找不到现成工作时的重要机制，不应仅凭函数名出现就判定它有问题。</figcaption></figure>
+<h3>5.3 原帖怎样排除“就是业务改慢了”？</h3>
+<p>它使用了两条互补证据：<strong>同一业务代码换工具链</strong>，检查是否随工具链变化；再用简化模型复现相似的 runtime 热点。最后改变 P 做干预，观察 CPU 成本变化。这样的证据链，比看到火焰图里有 runtime 函数便开始改调度参数更有说服力。</p>
+<h3>5.4 迁移到自己的服务：用绝对成本验证</h3>
+<ol>
+<li><strong>先固定工作。</strong>使用相同会话数、码率、包大小和机器环境；对照工具链与 P 时，分别保持其他变量一致。当前排障应先使用当前受支持的工具链，不必为了模仿历史而回退生产。</li>
+<li><strong>看 CPU 秒/有效工作量。</strong>对照相同窗口的总 CPU 与处理包数，而非只比较某个 runtime 函数占比。业务 CPU 降低后，即使调度 CPU 不变，其占比也会升高。</li>
+<li><strong>结合 trace 和 schedtrace。</strong>确认唤醒/休眠是否频繁、可运行任务是否很少；schedtrace 是采样快照，一次 <code>runqueue=0</code> 不能证明整个窗口没有排队，且该字段只表示全局队列。</li>
+<li><strong>对照更合适的 P 与任务粒度。</strong>如考虑合并唤醒、按批发送或改变定时策略，还要验证发送抖动与码率目标；减少唤醒可能损害业务时序。</li>
+</ol>
+<p>原帖的 P=12 是该机器、多个进程与特定负载下的 workaround，既不是“56÷5 的标准答案”，也不是每个流媒体服务的推荐值。验证必须同时保住吞吐、时序质量和错误率，不能只把 CPU 曲线压低。</p>
+<div class="boundary"><strong>历史边界：</strong>本例中的运行时函数拼写、定时器实现与具体开销属于当年的工具链。它展示的是定位路径，不证明当前 Go 必然存在同样的扩展性问题。原帖附有完整简化程序，可用于研究；本文未将其输出冒充为本机重测结果。</div>
+<p class="case-link">回到原理：<a href="../gmp-scheduler.html#source">工作窃取</a> · <a href="../gmp-scheduler.html#idle">自旋、休眠与唤醒</a></p>
+</section>
+
+<section id="investigation">
+<h2><span class="n">06</span>实际排查：每份证据回答一个问题</h2>
+<p>下面是本文补充的通用取证步骤，供迁移到自己的服务时使用。命令中的地址、进程和文件名都是示例；它们不是上述公司公开的实际环境，也不是本页已经执行的现场记录。</p>
+<h3>6.1 先把“变慢”定义清楚</h3>
+<p><strong>有限任务：</strong>固定输入、总任务量与结果，比较总完成时间。<strong>在线服务：</strong>固定到达率和请求分布，比较成功吞吐、端到端延迟、拒绝和超时，并单独测试饱和容量。若压测客户端始终“收到响应才发下一次”，服务越慢它发得越少，可能掩盖排队和过载。</p>
+<p>至少记录：目标实例的二进制/工具链版本、CPU 配置、生效的 GOMAXPROCS、worker/在途上限、输入速率、成功速率、P50/P99、错误率、队列长度以及 CPU 成本。多副本环境应选同类实例对照，避免某次流量倾斜被误认为参数收益。</p>
+<pre><code>// 放在目标进程的启动日志或诊断路径中，需要导入 log 和 runtime。
+// 实际 P 数应从运行中的目标进程读取；另开一个 Go 程序测不到它。
+log.Printf("go=%s platform=%s/%s NumCPU=%d P=%d",
+    runtime.Version(), runtime.GOOS, runtime.GOARCH,
+    runtime.NumCPU(), runtime.GOMAXPROCS(0))</code></pre>
+<p>启动日志只表示启动时状态。资源或并行度会动态变化时，还需要运行期观察；不同版本的默认更新行为、库的一次性初始化与显式设置要分别核对。</p>
+<h3 id="profiles">6.2 CPU、锁、G 状态：分别抓取，分别解释</h3>
+<p>以下以目标服务已在受控的 <code>127.0.0.1:6060</code> 提供标准 <code>net/http/pprof</code> 接口为前提。Linux/macOS 用 <code>curl</code>；Windows PowerShell 用 <code>curl.exe</code> 执行相同参数，避免旧版 PowerShell 的 curl 别名差异。分析时使用与采样二进制对应的 <code>service</code>；Windows 为 <code>service.exe</code>。</p>
+<pre><code># CPU：当前 CPU 时间花在了哪里？
+curl -fS -o cpu.pprof "http://127.0.0.1:6060/debug/pprof/profile?seconds=30"
+go tool pprof -top ./service cpu.pprof
+go tool pprof -top -cum ./service cpu.pprof
+
+# goroutine 快照：当前都卡在哪些调用栈？
+curl -fS -o goroutines.txt "http://127.0.0.1:6060/debug/pprof/goroutine?debug=2"
+
+# 单独选择一个短窗口录制执行追踪：G 如何切换状态？
+curl -fS -o execution.trace "http://127.0.0.1:6060/debug/pprof/trace?seconds=5"
+go tool trace execution.trace</code></pre>
+<p>在 pprof 中，<code>flat</code> 是函数自身的采样成本，<code>cum</code> 包含被调用路径；它们不能沿调用链重复相加。在 trace 中，找到目标 G，区分 <strong>Waiting → Runnable</strong> 与 <strong>Runnable → Running</strong>，再与请求关键阶段对齐。</p>
+<details><summary>需要查锁竞争或同步等待时</summary>
+<p>mutex、block profile 需要目标进程启用采样。例如，在已有的受控诊断开关内使用以下 API；采样强度应按开销验证，并在取证结束后恢复原配置。</p>
+<pre><code>// runtime 包；示例采样强度，不是统一生产默认值。
+// mutex：按竞争事件采样；返回旧配置，便于恢复。
+previousMutexFraction := runtime.SetMutexProfileFraction(10)
+defer runtime.SetMutexProfileFraction(previousMutexFraction)
+
+// block：按阻塞时长采样，单位为纳秒；此示例约每毫秒阻塞量一次。
+// API 不返回旧值，原有配置须由应用自己保存，再在取证后恢复。
+runtime.SetBlockProfileRate(1_000_000)</code></pre>
+<pre><code># 在 Go 1.23.4 标准 pprof handler 上，seconds 请求窗口增量 profile。
+# 按需选择一种抓取；不要将示例理解成必须同时启用全部采样。
+curl -fS -o mutex.pprof "http://127.0.0.1:6060/debug/pprof/mutex?seconds=30"
+go tool pprof -top -sample_index=delay ./service mutex.pprof
+
+curl -fS -o block.pprof "http://127.0.0.1:6060/debug/pprof/block?seconds=30"
+go tool pprof -top ./service block.pprof</code></pre>
+<p>mutex profile 主要观察已经完成的竞争事件，并归因到造成等待的持锁者栈；它不保证解释一把永远不释放的锁。遇到程序挂住，结合当前 goroutine 栈沿持锁/等待关系查。窗口结束时仍未结束的等待，也不能仅靠增量 profile 的数值完整衡量。</p>
+</details>
+<div class="table-wrap" tabindex="0" role="region" aria-label="诊断证据的适用边界"><table>
+<thead><tr><th>证据</th><th>能回答</th><th>单独不能证明</th></tr></thead>
+<tbody>
+<tr><td>CPU profile</td><td>采样 CPU 时间的热点、调用链。</td><td>所有阻塞耗时；runtime 占比高就一定调度异常。</td></tr>
+<tr><td>goroutine 栈</td><td>采样时的调用位置与等待线索。</td><td>历史等待分布；一次快照就证明泄漏或吞吐瓶颈。</td></tr>
+<tr><td>mutex / block profile</td><td>锁竞争或同步等待的累计/窗口成本。</td><td>一条请求的完整墙钟耗时；永不结束的等待全貌。</td></tr>
+<tr><td>execution trace</td><td>G 的状态、唤醒、调度与执行过程。</td><td>仅凭长 runnable 等待就判定是业务并发过多。</td></tr>
+<tr><td>cgroup CPU 统计</td><td>带宽限制、节流发生情况及窗口变化。</td><td>业务里究竟是哪段计算或哪个请求触发压力。</td></tr>
+</tbody></table></div>
+<p class="source">命令与采样语义：<a href="https://pkg.go.dev/net/http/pprof">net/http/pprof</a>、<a href="https://pkg.go.dev/runtime/pprof">runtime/pprof</a>、<a href="https://pkg.go.dev/runtime#SetMutexProfileFraction">SetMutexProfileFraction</a>、<a href="https://pkg.go.dev/runtime#SetBlockProfileRate">SetBlockProfileRate</a>、<a href="https://go.dev/doc/diagnostics">Go Diagnostics</a>。采样和 trace 自身有开销，应按需分开采集，并保留同等开销的对照条件。</p>
+<h4 id="scheduler-metrics">补上调度延迟：读取窗口内新增的样本</h4>
+<p><code>runtime/metrics</code> 直接读取<strong>当前进程</strong>的运行时指标，不走 pprof HTTP 接口。<code>/sched/latencies:seconds</code> 返回累计直方图：桶边界是秒，每个计数对应 <code>[下界, 上界)</code>。先保存第一次采样，再读取第二次，以桶计数之差估算窗口内新增样本的分布。</p>
+<details><summary>完整 Go 示例：保留快照、做差分，找到 P99 所在桶</summary>
+<p>保存为 <code>sched-latency.go</code>，运行 <code>go run sched-latency.go</code> 可验证读取流程；单独运行只测它自己。用于业务排查时，将函数接入目标服务的受控诊断流程，在后台调用 <code>reportSchedLatency(5 * time.Second)</code>，让窗口覆盖实际负载；不要在请求处理路径中等待这 5 秒。</p>
+<pre><code id="sched-metrics-program">package main
+
+import (
+    "fmt"
+    "runtime/metrics"
+    "time"
+)
+
+func reportSchedLatency(window time.Duration) {
+    samples := []metrics.Sample{{Name: "/sched/latencies:seconds"}}
+    metrics.Read(samples)
+    if samples[0].Value.Kind() != metrics.KindFloat64Histogram {
+        fmt.Println("当前运行时不支持该直方图指标")
+        return
+    }
+    h := samples[0].Value.Float64Histogram()
+    // 必须复制底层切片；再次 Read 可能复用并覆盖原有存储。
+    before := append([]uint64(nil), h.Counts...)
+    buckets := append([]float64(nil), h.Buckets...)
+
+    time.Sleep(window)
+    metrics.Read(samples)
+    after := samples[0].Value.Float64Histogram()
+    // 同一进程、同一指标的桶边界不变；这里只读，不修改运行时存储。
+    delta := make([]uint64, len(before))
+    var total uint64
+    for i, n := range after.Counts {
+        if n &lt; before[i] {
+            fmt.Println("计数回退，跳过此窗口")
+            return
+        }
+        delta[i] = n - before[i]
+        total += delta[i]
+    }
+    if total == 0 {
+        fmt.Println("窗口内没有新增样本，不能估算 P99")
+        return
+    }
+
+    // ceil(0.99 * total)，用整数避免浮点取整与乘法溢出。
+    rank := total - total/100
+    var cumulative uint64
+    for i, n := range delta {
+        cumulative += n
+        if cumulative &gt;= rank {
+            fmt.Printf("window=%s samples=%d p99_bucket_ms=[%.6g, %.6g)\n",
+                window, total, buckets[i]*1e3, buckets[i+1]*1e3)
+            return
+        }
+    }
+}
+
+func main() {
+    reportSchedLatency(5 * time.Second)
+}</code></pre>
+<p>输出中的 <code>samples</code> 是指标新增记录的样本数，不是业务请求数；运行时也可能对调度事件采样。没有新增样本不等于延迟为零。<code>p99_bucket_ms=[a, b)</code> 表示采用最近秩法得到的样本 P99 落在该毫秒区间，<strong>不是精确到某个小数的 P99</strong>；若上界为 <code>+Inf</code>，就没有有限的桶上界。</p>
+</details>
+<p>读取流程是：<strong>复制累计快照 → 等待观察窗口 → 再次读取 → 桶计数差分 → 从窗口分布找分位桶</strong>。不要只拷贝直方图指针或切片头；也不要直接拿进程启动以来的分布，解释刚刚发生的短时尖峰。新增记录的等待可能跨越窗口起点，因此这也不是把等待时长精确裁剪到这 5 秒内。</p>
+<p>指标覆盖整个进程，不能单独归因到某个接口或后台任务。P99 桶上移时，再结合请求追踪、execution trace 和 CPU 节流证据定位原因。样本很少的窗口不适合据此判断长尾趋势。</p>
+<p class="source">API 依据：<a href="https://pkg.go.dev/runtime/metrics#Read">metrics.Read 的存储复用规则</a>、<a href="https://pkg.go.dev/runtime/metrics#Float64Histogram">Float64Histogram 的桶边界与计数</a>；指标定义另与 GMP 主文使用的 <a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/metrics/description.go#L413">Go 1.23.4 源码</a> 核对。</p>
+<h3 id="cgroup">6.3 检查 CPU 配额：先找对 cgroup，再看增量</h3>
+<p>以下仅适用于 Linux。先根据目标进程的 <code>/proc/PID/cgroup</code> 与挂载信息定位它所属的 cgroup；容器命名空间、宿主机路径和进程看到的路径可能不同。<strong>不能在宿主机随手读取根目录的 cpu.stat，就把它当成某个容器的统计。</strong></p>
+<pre><code># POSIX shell；将 12345 换成当前命名空间可见的目标进程 PID。
+appPid=12345
+cat "/proc/$appPid/cgroup"
+cat "/proc/$appPid/mountinfo"
+
+# cgroup v2：仅当此目录确实对应目标进程时使用这个示例路径。
+cg=/sys/fs/cgroup
+cat "$cg/cpu.max"
+date -Is
+cat "$cg/cpu.stat"
+sleep 10
+date -Is
+cat "$cg/cpu.stat"</code></pre>
+<p><code>cpu.max</code> 形如 <code>200000 100000</code>，表示每 100000μs 周期有 200000μs CPU 时间预算，即 2 核等效带宽；这是<strong>说明格式的假设值</strong>。<code>max</code> 表示该层不设此上限，还应检查父层约束。cpuset 则是另一类限制。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="cgroup v1 与 v2 CPU 接口差异"><table>
+<thead><tr><th>用途</th><th>cgroup v2</th><th>cgroup v1 的 CPU controller</th></tr></thead>
+<tbody>
+<tr><td>配额 / 周期</td><td><code>cpu.max</code></td><td><code>cpu.cfs_quota_us</code> / <code>cpu.cfs_period_us</code>；quota 为 -1 表示该层不限。</td></tr>
+<tr><td>节流次数</td><td><code>cpu.stat</code> 中的 <code>nr_throttled</code></td><td>同名字段。</td></tr>
+<tr><td>节流时间</td><td><code>throttled_usec</code>，微秒。</td><td><code>throttled_time</code>，纳秒。</td></tr>
+</tbody></table></div>
+<p>分析两个采样间的增量，确认窗口覆盖异常。<code>Δnr_throttled / Δnr_periods</code> 在分母大于零时可以反映发生节流的周期比例，但不是“CPU 损失百分比”；节流时间也不能不加解释地除以墙钟时间，就称作单请求延迟或精确损失。目标层未记录节流，也应检查祖先层的带宽约束，不能直接排除父层节流。</p>
+<p class="source">接口依据：<a href="https://docs.kernel.org/admin-guide/cgroup-v2.html#cpu-interface-files">Linux cgroup v2 · CPU interface files</a>、<a href="https://docs.kernel.org/scheduler/sched-bwc.html">CFS Bandwidth Control</a>。Kubernetes requests / limits 的区别见 <a href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/">官方资源管理文档</a>。</p>
+<h3>6.4 用 schedtrace 看线索，不把快照当成全过程</h3>
+<p>这通常需要在启动受控实例时配置，以下各例只影响该次子进程或在结束后恢复环境变量；请保留原有 GODEBUG 项。示例只启用每秒调度摘要，目标程序名为 <code>service</code>。</p>
+<details><summary>Linux / macOS POSIX shell</summary>
+<pre><code>GODEBUG="${GODEBUG:+$GODEBUG,}schedtrace=1000" ./service</code></pre>
+</details>
+<details><summary>Windows PowerShell</summary>
+<pre><code>$savedDebug = $env:GODEBUG
+try {
+    $env:GODEBUG = if ([string]::IsNullOrEmpty($savedDebug)) {
+        "schedtrace=1000"
+    } else {
+        "$savedDebug,schedtrace=1000"
+    }
+    .\service.exe
+} finally {
+    $env:GODEBUG = $savedDebug
+}</code></pre>
+</details>
+<details><summary>Windows cmd</summary>
+<pre><code>rem 新开一个子 cmd；脚本内部使用 setlocal，退出后不会改父会话。
+rem 将以下内容保存为诊断用 .cmd，与 service.exe 放在同一工作目录。
+@echo off
+setlocal
+if defined GODEBUG (
+    set "GODEBUG=%GODEBUG%,schedtrace=1000"
+) else (
+    set "GODEBUG=schedtrace=1000"
+)
+service.exe
+endlocal</code></pre>
+</details>
+<p>重点看 <code>gomaxprocs</code>、<code>idleprocs</code>、<code>spinningthreads</code>、全局 <code>runqueue</code> 与方括号里的各 P 本地队列长度。结合多个样本与 profile 判断；某一秒队列空，不代表这一秒内没有瞬时拥堵。摘要也不是 G 状态转换日志。</p>
+<h3>6.5 用什么结果，才算改对了？</h3>
+<div class="table-wrap" tabindex="0" role="region" aria-label="五类问题的修复验证标准"><table>
+<thead><tr><th>怀疑方向</th><th>干预</th><th>需要同时改善或守住的结果</th></tr></thead>
+<tbody>
+<tr><td>配额与 P 不匹配</td><td>单独调整 P 或 CPU 配额。</td><td>节流窗口变化、成功吞吐、P99、成本；收益与取舍明确。</td></tr>
+<tr><td>锁竞争</td><td>减少竞争、调整资源入口的并发上限。</td><td>竞争成本下降；同到达压力下端到端延迟、拒绝率与成功量合理。</td></tr>
+<tr><td>整数边界 / 自动缩容</td><td>调整资源下限或自动配置策略。</td><td>实际 P 与配额符合预期；长期消费能力覆盖输入，lag 不再持续增长。</td></tr>
+<tr><td>后台争用前台</td><td>限制后台预算、分批推进或隔离。</td><td>在线 SLO 达标；后台也能在要求的时限内完成。</td></tr>
+<tr><td>短任务调度开销</td><td>对照 P、唤醒方式或任务粒度。</td><td>CPU 秒/有效工作量下降；吞吐、时序、抖动与错误率不退化。</td></tr>
+</tbody></table></div>
+<p>每次只改一个关键变量，保留原配置与回退路径，重复对照。解释要落在证据上：究竟减少了哪种等待或成本，为什么业务指标因此改善；“goroutine 数少了”本身不是结论。</p>
+</section>
+
+<section id="references">
+<h2>来源与版本</h2>
+<p class="source">来源核对日期：2026-11-03。案例数字均来自原作者公开记录；图表为按所标数据重绘或概念示意。没有公开的配置、日期或实验结果，不作补全。</p>
+<ol>
+<li><a href="https://github.com/uber-go/automaxprocs#performance">Uber automaxprocs · Performance</a>：内部负载均衡器的配额对照数据；该表未注明 Go 版本和测试日期。</li>
+<li><a href="https://github.com/golang/go/issues/33747">Go Issue #33747</a>：HTTP/RPC 服务的锁竞争观察及历史微基准。<a href="https://github.com/golang/go/issues/33747#issuecomment-524054576">并发上限的代码解释</a>；<a href="https://github.com/golang/go/issues/33747#issuecomment-542812362">CL 200577 的补丁验证</a>。不推断当前版本仍有同一问题。</li>
+<li><a href="https://engineering.grab.com/performance-bottlenecks-go-apps">Grab · Performance bottlenecks of Go application on Kubernetes with non-integer CPU allocation</a>，2023：流水线的 VPA、CPU 与积压变化；原文原理措辞结合官方资料说明边界。</li>
+<li><a href="https://www.cockroachlabs.com/blog/rubbing-control-theory/">Cockroach Labs · Rubbing control theory on the Go scheduler</a>，2022：后台 CPU 工作、调度延迟的取证与准入控制。涉及定制运行时，不当作标准 Go API 教程。</li>
+<li><a href="https://github.com/golang/go/issues/28808">Go Issue #28808</a>，2018：流媒体应用升级对照、简化程序、CPU profile 与 schedtrace。历史实现细节不与 GMP 主文的 Go 1.23.4 源码混写。</li>
+<li><a href="https://go.dev/blog/container-aware-gomaxprocs">Go · Container-aware GOMAXPROCS</a>，2025；<a href="https://go.dev/doc/go1.25#runtime">Go 1.25 Runtime release notes</a>：容器感知、取整与更新行为。使用时核对显式覆盖与兼容配置。</li>
+<li><a href="https://go.dev/doc/diagnostics">Go Diagnostics</a>、<a href="https://pkg.go.dev/net/http/pprof">net/http/pprof</a>、<a href="https://pkg.go.dev/runtime/pprof">runtime/pprof</a>、<a href="https://pkg.go.dev/runtime/metrics">runtime/metrics</a>：本文补充取证步骤的 API 与工具依据。增量 profile 命令按 Go 1.23.4 的标准 handler 核对。</li>
+<li><a href="https://docs.kernel.org/admin-guide/cgroup-v2.html#cpu-interface-files">Linux cgroup v2</a>、<a href="https://docs.kernel.org/scheduler/sched-bwc.html">CFS Bandwidth Control</a>、<a href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/">Kubernetes 资源管理</a>：CPU 带宽、统计单位及 requests / limits 的边界。</li>
+</ol>
+<p><a href="../gmp-scheduler.html#value">返回 GMP 调度模型</a></p>
+</section>
+</main>
+</div>
+</body>
+</html>

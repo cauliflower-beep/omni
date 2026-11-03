@@ -1,0 +1,1078 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="从实际排障问题出发，理解 Go GMP 调度、队列、阻塞、抢占与固定版本源码，附可逐步播放的示意图及可复现实验。">
+<title>GMP 调度模型</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fffef9;
+  --paper: #ffffff;
+  --panel: #eef8ff;
+  --ink: #253747;
+  --muted: #576d7c;
+  --line: #d9e8ed;
+  --accent: #137eae;
+  --soft: #e3f3ff;
+  --g: #1683bd;
+  --gfill: #cdeeff;
+  --wait: #a85a0c;
+  --wfill: #ffdbab;
+  --run: #4c7c12;
+  --rfill: #c8ec91;
+  --code: #edf7ff;
+  --codeink: #243d51;
+  --linenum: #627f94;
+  --sky: #dff3ff;
+  --sky-line: #81c6ed;
+  --grass: #e6f5c6;
+  --grass-line: #accf70;
+  --orange: #fff0d7;
+  --orange-line: #efbb72;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 28px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16.5px/1.95 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: break-word;
+}
+a { color: var(--accent); text-underline-offset: 4px; overflow-wrap: anywhere; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+button, select { font: inherit; }
+button {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.65;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+button:hover:not(:disabled) { background: var(--panel); border-color: var(--muted); }
+button:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible, .scene-scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+button:disabled { opacity: .4; cursor: default; }
+.primary { background: #d8f0ff; color: #075981; border-color: #6ab5df; }
+.primary:hover:not(:disabled) { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+.layout {
+  max-width: 1232px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 186px minmax(0, 1fr);
+  gap: 62px;
+  padding: 36px 40px 76px;
+}
+aside { position: sticky; top: 38px; height: fit-content; max-height: calc(100vh - 70px); overflow-y: auto; scrollbar-width: thin; font-size: 13px; line-height: 1.85; }
+aside nav { border-left: 1px solid var(--line); padding-left: 14px; }
+aside a { display: block; color: var(--muted); padding: 6px 0; text-decoration: none; }
+aside a:hover { color: var(--accent); }
+aside .nav-sub { padding: 3px 0 3px 12px; font-size: 12px; }
+main { min-width: 0; max-width: 860px; }
+.hero { padding: 0 0 20px; border-bottom: 1px solid var(--line); }
+h1 { font-size: 30px; font-weight: 650; line-height: 1.5; letter-spacing: -.02em; margin: 0; }
+section { padding: 34px 0 36px; border-bottom: 1px solid var(--line); }
+h2 { font-size: 22px; font-weight: 600; line-height: 1.65; margin: 0 0 20px; letter-spacing: -.015em; }
+h2 .n { font: 400 13px/1.5 ui-monospace, Consolas, monospace; color: var(--accent); margin-right: 12px; vertical-align: 2px; }
+h3 { font-size: 18px; font-weight: 600; line-height: 1.8; margin: 28px 0 10px; }
+h4 { font-size: 16px; font-weight: 600; line-height: 1.8; margin: 24px 0 9px; }
+p { margin: 14px 0; }
+strong { font-weight: 600; }
+.reading-line { max-width: none; }
+.note { margin: 23px 0; padding: 12px 18px; border-left: 3px solid var(--grass-line); background: #f0f9df; font-size: 15px; }
+.subtle { font-size: 13px; color: var(--muted); line-height: 1.9; }
+.table-wrap { overflow-x: auto; margin: 23px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.9; }
+th, td { padding: 13px 12px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+th { font-weight: 600; background: var(--sky); border-bottom-color: var(--sky-line); color: #174f6b; }
+tbody tr:nth-child(even) { background: #fffaf0; }
+th:first-child, td:first-child { padding-left: 12px; min-width: 145px; }
+th:last-child, td:last-child { padding-right: 12px; }
+code { font: .89em/1.65 ui-monospace, SFMono-Regular, Consolas, monospace; background: var(--panel); padding: 2px 5px; border-radius: 3px; }
+pre { margin: 18px 0; padding: 18px 20px; overflow: auto; background: var(--code); color: var(--codeink); border: 1px solid var(--line); border-radius: 5px; font-size: 13px; line-height: 1.85; tab-size: 4; }
+pre code { background: none; color: inherit; padding: 0; font: inherit; border-radius: 0; }
+.code-line { display: block; white-space: pre; }
+.code-line b { display: inline-block; min-width: 5ch; margin-right: 16px; font-weight: 400; color: var(--linenum); user-select: none; }
+.source-code { margin: 18px 0; }
+.source-code figcaption { padding: 7px 12px; background: var(--sky); border-left: 3px solid var(--sky-line); border-radius: 4px 4px 0 0; font-size: 12px; line-height: 1.8; }
+.source-code figcaption a { text-decoration: none; }
+.source-code figcaption a:hover { text-decoration: underline; }
+.source-code pre { margin: 0; border-top: 0; border-radius: 0 0 5px 5px; }
+.source { color: var(--muted); font-size: 12px; line-height: 1.95; }
+.source a { text-decoration-color: var(--line); }
+.source a:hover { text-decoration-color: var(--accent); }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 27px 0; }
+.tile { border: 0; border-top: 3px solid var(--sky-line); padding: 14px 16px; border-radius: 5px; background: var(--sky); }
+.tile:nth-child(2) { background: var(--orange); border-color: var(--orange-line); }
+.tile:nth-child(3) { background: var(--grass); border-color: var(--grass-line); }
+.tile h3 { font-size: 19px; margin: 0 0 10px; }
+.tile p { font-size: 14px; line-height: 1.95; margin: 8px 0; }
+.diagram { background: var(--panel); border: 0; border-radius: 5px; margin: 25px 0; padding: 16px; box-shadow: none; }
+.diagram svg { width: 100%; height: auto; display: block; }
+.diagram figcaption { padding: 10px 4px 0; color: var(--muted); font-size: 12px; line-height: 1.9; }
+svg text { fill: var(--ink); font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+svg rect { rx: 6px; }
+svg .box { fill: var(--paper); stroke: var(--line); stroke-width: 1.2; }
+svg .pbox { fill: var(--grass); stroke: var(--grass-line); stroke-width: 1.2; }
+svg .p-idle { fill: #f4f8fb; stroke: #aac2ce; stroke-dasharray: 5 4; }
+svg .p-syscall { fill: var(--orange); stroke: var(--orange-line); stroke-dasharray: 5 3; }
+svg .m-resource { fill: var(--orange); stroke: var(--orange-line); }
+svg .os-resource, svg .ready-zone { fill: var(--sky); stroke: var(--sky-line); }
+svg .wait-zone { fill: #fff5e5; stroke: var(--orange-line); }
+svg .arr { fill: none; stroke: #389ac4; stroke-width: 1.7; }
+svg .tag { fill: var(--gfill); stroke: var(--g); stroke-width: 1.2; }
+svg .label { font-size: 17px; }
+svg .small { font-size: 14px; fill: var(--muted); }
+svg .tiny { font-size: 13px; fill: var(--muted); }
+.explorer { border: 1px solid var(--sky-line); border-radius: 6px; padding: 20px; margin: 24px 0; background: var(--paper); }
+.state-legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; font-size: 12px; line-height: 1.7; }
+.state-legend span { padding: 3px 9px; border-radius: 4px; color: var(--ink); }
+.legend-ready { background: var(--gfill); }
+.legend-running { background: var(--rfill); }
+.legend-waiting { background: var(--wfill); }
+.controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; }
+.controls label { font-size: 13px; color: var(--muted); }
+.controls select { min-width: 175px; max-width: 240px; padding: 7px 10px; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; line-height: 1.65; }
+.scene-scroll { overflow-x: auto; margin: 14px 0 0; }
+.explorer svg { width: 100%; display: block; margin: 0; }
+.step-text { min-height: 148px; border-top: 0; padding: 13px 16px; background: #edf8dc; border-radius: 5px; }
+.step-text h3 { font-size: 16px; margin: 0 0 7px; }
+.step-text p { font-size: 15px; margin: 6px 0; line-height: 1.95; }
+.stepcount { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); margin-left: auto; }
+.g-token { transition: transform .5s ease, opacity .3s; }
+.g-token rect { fill: var(--gfill); stroke: var(--g); stroke-width: 1.3; }
+.g-token.running rect { fill: var(--rfill); stroke: var(--run); }
+.g-token.waiting rect, .g-token.syscall rect { fill: var(--wfill); stroke: var(--wait); }
+.g-token .gname { font-size: 17px; font-weight: 600; }
+.g-token .gstate { font-size: 12px; }
+.scenario-note { margin: 15px 0 0; color: var(--muted); font-size: 13px; line-height: 1.9; }
+details { margin: 23px 0; padding: 13px 0; background: none; border: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: 0; }
+summary { font-size: 15px; font-weight: 500; cursor: pointer; }
+details[open] summary { margin-bottom: 16px; }
+ol, ul { padding-left: 1.5em; }
+li { margin: 8px 0; }
+.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; line-height: 2; }
+.chain code { padding: 4px 7px; }
+.chain span { color: var(--muted); }
+.pill { display: inline-block; padding: 1px 6px; background: var(--soft); color: var(--accent); border-radius: 3px; font-size: 12px; vertical-align: middle; }
+.results td { font-variant-numeric: tabular-nums; }
+.checklist li { margin: 13px 0; }
+.sources { font-size: 14px; }
+.sources li { margin: 12px 0; }
+.print-steps { display: none; }
+.lab-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 14px; margin: 20px 0; }
+noscript p { padding: 14px; background: var(--soft); }
+.rule { font-size: 17px; font-weight: 600; line-height: 1.9; margin: 24px 0 16px; }
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 170px minmax(0, 1fr); gap: 34px; padding: 34px 28px 64px; }
+  aside { font-size: 12px; top: 28px; }
+  .tiles { gap: 18px; }
+  .tile { padding-left: 12px; }
+}
+@media (max-width: 820px) {
+  .layout { display: block; max-width: 760px; padding: 24px 24px 54px; }
+  aside { position: static; margin-bottom: 27px; max-height: none; overflow: visible; }
+  aside .nav-sub { padding: 2px 0; }
+  aside nav { display: flex; flex-wrap: wrap; gap: 5px 16px; border-left: 0; border-bottom: 1px solid var(--line); padding: 0 0 17px; }
+  aside a { padding: 2px 0; font-size: 12px; }
+  h1 { font-size: 28px; }
+  h2 { font-size: 21px; }
+  .hero { padding-bottom: 26px; }
+  .diagram { overflow-x: auto; padding: 12px; }
+  .diagram svg { min-width: 700px; }
+  .explorer svg { min-width: 740px; }
+  .controls select { flex: 1 0 100%; width: 100%; max-width: none; }
+  .controls label { width: 100%; }
+  .stepcount { margin-left: auto; }
+}
+@media (max-width: 520px) {
+  body { font-size: 16px; line-height: 1.95; }
+  .layout { padding: 21px 20px 45px; }
+  h1 { font-size: 27px; }
+  h2 { font-size: 20px; }
+  h3 { font-size: 17px; }
+  h4 { font-size: 16px; }
+  h2 .n { margin-right: 9px; font-size: 12px; }
+  section { padding: 28px 0 30px; }
+  .tiles { grid-template-columns: 1fr; gap: 18px; margin: 22px 0; }
+  .tile h3 { font-size: 18px; margin-bottom: 4px; }
+  .tile p { margin: 5px 0; }
+  .table-wrap table { min-width: 620px; }
+  .note { padding: 10px 14px; font-size: 14px; }
+  .explorer { padding: 13px; }
+  .step-text { min-height: 174px; }
+  pre { padding: 14px; font-size: 12px; }
+  .source { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .g-token, button { transition: none; }
+}
+@media print {
+  :root { color-scheme: light; --bg: white; --paper: white; --panel: #f4f5f6; --ink: #202020; --muted: #555; --line: #ddd; --accent: #333; --soft: #f3f5f5; --code: #f4f5f6; --codeink: #222; --linenum: #666; }
+  body { background: white; color: black; font-size: 11pt; }
+  .layout { display: block; padding: 0; max-width: none; }
+  aside, .controls, .lab-actions { display: none; }
+  main { max-width: none; }
+  h1 { font-size: 22pt; }
+  h2 { font-size: 15pt; break-after: avoid; }
+  h3 { font-size: 12pt; break-after: avoid; }
+  h4 { font-size: 11pt; break-after: avoid; }
+  pre { white-space: pre-wrap; font-size: 9pt; }
+  pre code, .code-line { white-space: pre-wrap; }
+  a { color: #333; }
+  .explorer { break-inside: avoid; }
+  .print-steps { display: block; }
+  .print-steps p { font-size: 10pt; }
+  .step-text { min-height: 0; }
+  details { break-inside: auto; }
+  .tiles { grid-template-columns: repeat(3, 1fr); }
+  section { padding: 24px 0; }
+  .table-wrap { overflow: visible; }
+  .table-wrap table { min-width: 0; }
+  .diagram { overflow: visible; }
+  .diagram svg, .explorer svg { min-width: 0; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside aria-label="文章导航">
+<nav>
+<a href="#value">00 · 工作上到底有什么用</a>
+<a href="#model">01 · 从直觉到 G、M、P</a>
+<a href="#queues">02 · 状态与队列</a>
+<a href="#playground">03 · 逐步观察调度</a>
+<a href="#source">04 · 沿源码走一遍</a>
+<a class="nav-sub" href="#idle">自旋与唤醒</a>
+<a class="nav-sub" href="#netpoll">网络轮询</a>
+<a class="nav-sub" href="#sysmon">sysmon</a>
+<a class="nav-sub" href="#stack">动态栈与同步抢占</a>
+<a class="nav-sub" href="#preemption">异步抢占</a>
+<a class="nav-sub" href="#stw">STW 协作</a>
+<a class="nav-sub" href="#gosched">Gosched 主动让出</a>
+<a href="#lab">05 · 四个本机实验</a>
+<a href="#diagnose">06 · 遇到问题怎么查</a>
+<a href="#depth">07 · 学到什么程度够用</a>
+<a href="#references">源码与参考</a>
+</nav>
+</aside>
+<main>
+<header class="hero">
+<h1>GMP 调度模型</h1>
+</header>
+
+<section id="value">
+<h2><span class="n">00</span>GMP 对实际开发有什么用？</h2>
+<p class="reading-line">例如，遇到以下情况时，可以用调度原理缩小排查范围：</p>
+<div class="table-wrap"><table>
+<thead><tr><th>遇到的现象</th><th>理解调度后，能改变什么判断</th><th>实际下一步</th></tr></thead>
+<tbody>
+<tr><td>批处理从 8 个 worker 加到 80 个，吞吐没涨，耗时反而上升<br><a href="cases/concurrency-performance.html">并发与 CPU：五个真实案例 →</a></td><td>先区分计算工作与等待。更多 G 不等于更多 CPU；调度器不能让固定计算量消失。</td><td>看 CPU profile、有效 GOMAXPROCS、CPU 配额与可运行任务数量，再用固定总工作量比较并发度。</td></tr>
+<tr><td>接口 p99 上升，但某个函数的计算耗时没变</td><td>“任务就绪”和“任务开始运行”之间可能有等待；CPU profile 本身不能告诉你全部等待时间。</td><td>用 execution trace 区分 runnable 等待、同步阻塞、网络等待；容器环境同时查 CPU throttling。</td></tr>
+<tr><td>goroutine 越来越多，但 CPU 很低</td><td>可能大量 G 正在等 channel、锁或 I/O，数量上涨不自动等于调度器太忙，也不自动证明泄漏。</td><td>比较多次 goroutine profile，沿等待栈找退出条件、上游生产速率和下游处理能力。</td></tr>
+<tr><td>引入原生库或阻塞调用后，OS 线程数明显增长</td><td>部分调用会占住 M，运行时可能把 P 交给其他 M 继续执行；GOMAXPROCS 不是线程数上限。</td><td>查 syscall/cgo 与 threadcreate 线索、调用并发度；限制昂贵调用的在途数量，并确认平台和库的实际行为。</td></tr>
+<tr><td>代码测试总“恰好按顺序”，上线后结果乱了</td><td>调度顺序没有业务级的先后保证。单 P 也可能交错执行多个 G。</td><td>用 channel、锁或其他同步建立正确关系，运行 race detector；不用 Sleep 充当同步协议。</td></tr>
+<tr><td>准备引入协程池，理由只有“复用肯定更快”</td><td>运行时已经在 M 上复用 G 的执行。应用层池需要明确解决并发上限、排队策略或可测的复用开销。</td><td>先确定瓶颈与资源预算，再对比直接启动、信号量、固定 worker；记录吞吐、延迟、分配与排队。</td></tr>
+</tbody></table></div>
+<p>理解 GMP 不会自动修复慢 SQL、缩短远端响应或消除算法开销。它帮你划清：问题发生在<strong>执行、排队、阻塞，还是 CPU 资源限制</strong>。这些是排查方向，最终结论仍要靠测量。</p>
+<p class="source">取证工具依据：<a href="https://go.dev/doc/diagnostics">Go 官方诊断指南</a>；容器配置依据：<a href="https://go.dev/blog/container-aware-gomaxprocs">Container-aware GOMAXPROCS</a>。</p>
+</section>
+
+<section id="model">
+<h2><span class="n">01</span>先搭一个准确的直觉</h2>
+<p>官方运行时说明把调度器的工作概括为匹配三种资源：<strong>G 是要执行的代码，M 是执行它的 OS 线程，P 是执行普通 Go 代码所需的权利与资源</strong>。可以把它们想成车间里的工单、工人和工作台。</p>
+<div class="tiles">
+<div class="tile"><h3>G · 工单</h3><p>有处理进度，可以排队、暂停、恢复。</p><p><strong>准确含义：</strong>goroutine 的运行时对象，记录栈、保存的执行上下文、状态等。</p></div>
+<div class="tile"><h3>M · 工人</h3><p>真正动手执行工单的人。</p><p><strong>准确含义：</strong>OS 线程。由操作系统调度到逻辑 CPU 上执行。</p></div>
+<div class="tile"><h3>P · 工作台</h3><p>工人拿到工作台，才能处理普通工单。</p><p><strong>准确含义：</strong>运行时执行资源，包含本地运行队列、内存分配缓存等。</p></div>
+</div>
+<figure class="diagram">
+<svg viewBox="0 0 940 290" role="img" aria-labelledby="overview-title overview-desc">
+<title id="overview-title">G、M、P 与操作系统的关系</title><desc id="overview-desc">两个操作系统线程分别持有两个 P，各执行一个 G。其他就绪 G 在 P 的队列中等待。操作系统再把线程映射到逻辑 CPU，P 不是物理核心。</desc>
+<defs><marker id="ov-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="var(--muted)"/></marker></defs>
+<rect class="box m-resource" x="20" y="20" width="425" height="150" rx="12"/><rect class="box m-resource" x="495" y="20" width="425" height="150" rx="12"/>
+<text x="42" y="52" class="label">M0：OS 线程</text><text x="518" y="52" class="label">M1：OS 线程</text>
+<rect class="pbox" x="40" y="72" width="150" height="70" rx="8"/><text x="60" y="101" class="label">持有 P0</text><text x="60" y="125" class="small">队列：G3、G4…</text>
+<rect class="tag" x="265" y="80" width="145" height="54" rx="8"/><text x="288" y="113" class="label">执行 G1</text><path class="arr" d="M195 108H255" marker-end="url(#ov-arrow)"/>
+<rect class="pbox" x="515" y="72" width="150" height="70" rx="8"/><text x="535" y="101" class="label">持有 P1</text><text x="535" y="125" class="small">队列：G5、G6…</text>
+<rect class="tag" x="740" y="80" width="145" height="54" rx="8"/><text x="763" y="113" class="label">执行 G2</text><path class="arr" d="M670 108H730" marker-end="url(#ov-arrow)"/>
+<path class="arr" d="M235 175V213M708 175V213" marker-end="url(#ov-arrow)"/>
+<rect class="pbox os-resource" x="120" y="224" width="700" height="48" rx="8"/><text x="470" y="254" text-anchor="middle" class="label">操作系统调度 M → 逻辑 CPU（没有固定的 P ↔ CPU 绑定）</text>
+</svg>
+<figcaption>本图设 GOMAXPROCS=2。最多两个 M 同时执行普通 Go 代码；进程仍可能拥有更多 OS 线程。</figcaption>
+</figure>
+<h3>为什么还要有 P？只有 G 和 M 不行吗？</h3>
+<p>可以先把 G 放进一个全局队列，让所有 M 取任务，但竞争同一个队列会带来协调开销。P 提供了分散的本地运行队列与本地资源；M 持有一个 P 工作，暂时不能执行普通 Go 代码时，P 又可以被别的 M 使用。这把“线程身份”和“可复用执行资源”分开了。</p>
+<p>本地队列减少集中竞争，工作窃取缓解队列不均衡，全局队列承担跨 P 分发等工作。实际实现还需要原子操作、全局锁与唤醒协议，不能把“本地队列”理解成完全没有同步成本。</p>
+<div class="note"><strong>注意：</strong>P 不是 CPU 核心，也不只是一个“许可证数字”；G 不是每次运行完就丢弃的函数指针，它还保留栈和执行进度。M 不能凭空制造 CPU 时间，最终仍受 OS 调度与 CPU 配额约束。</div>
+<p><code>GOMAXPROCS=1</code> 允许很多 G 并发推进，但普通 Go 代码同一时刻只有一个执行名额。<strong>并发是多个任务可以交错推进，并行是多个任务在同一时刻执行。</strong>运行时系统线程、系统调用及某些原生代码的活动不能直接套进“整个进程只运行一个线程”的说法。</p>
+<p class="source">固定版本依据：<a data-src="src/runtime/HACKING.md" data-line="6" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/HACKING.md#L6">HACKING.md：Gs, Ms, Ps</a>、<a data-src="src/runtime/proc.go" data-line="22" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L22">proc.go 调度器设计注释</a>、<a data-src="src/runtime/debug.go" data-line="12" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/debug.go#L12">GOMAXPROCS 的 API 说明</a>。</p>
+</section>
+
+<section id="queues">
+<h2><span class="n">02</span>“活着”“能跑”“正在跑”不是一回事</h2>
+<div class="table-wrap"><table><thead><tr><th>G 的主要状态</th><th>此刻在做什么</th><th>排障时意味着什么</th></tr></thead><tbody>
+<tr><td><code>_Grunnable</code></td><td>可以执行，正在等待调度。</td><td>如果就绪等待时间持续增加，需要查执行资源与可运行任务的压力。</td></tr>
+<tr><td><code>_Grunning</code></td><td>已分配 M 与 P，可以执行 Go 代码。</td><td>这不承诺对应 M 此刻一定获得物理 CPU，OS 仍可能把线程换下。</td></tr>
+<tr><td><code>_Gwaiting</code></td><td>在运行时等待，例如 channel、锁、timer、网络轮询条件。</td><td>等条件满足才会重新 runnable；加 P 不一定能让条件更快满足。</td></tr>
+<tr><td><code>_Gsyscall</code></td><td>处于系统调用路径，关联 M，不执行用户 Go 代码。</td><td>M 可能被占住；P 可以与它分离。</td></tr>
+<tr><td><code>_Gdead</code></td><td>这个 G 对象当前未使用，可能刚退出，也可能准备复用。</td><td>goroutine 退出不等于其运行时对象必须立刻销毁。</td></tr>
+</tbody></table></div>
+<figure class="diagram">
+<svg viewBox="0 0 940 280" role="img" aria-labelledby="state-title state-desc">
+<title id="state-title">goroutine 的主要状态转换</title><desc id="state-desc">创建后进入 runnable，调度为 running，运行时等待进入 waiting，条件满足后回到 runnable；系统调用进入 syscall，返回后取得 P 可继续 running，否则先回到 runnable；函数结束后进入 dead。图省略 GC 扫描等状态。</desc>
+<defs><marker id="st-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="var(--muted)"/></marker></defs>
+<rect class="tag" x="65" y="85" width="170" height="60" rx="10"/><text x="150" y="123" text-anchor="middle" class="label">runnable</text>
+<rect x="365" y="85" width="170" height="60" rx="10" fill="var(--rfill)" stroke="var(--run)"/><text x="450" y="123" text-anchor="middle" class="label">running</text>
+<rect x="690" y="20" width="175" height="60" rx="10" fill="var(--wfill)" stroke="var(--wait)"/><text x="777" y="57" text-anchor="middle" class="label">waiting</text>
+<rect x="690" y="160" width="175" height="60" rx="10" fill="var(--wfill)" stroke="var(--wait)"/><text x="777" y="197" text-anchor="middle" class="label">syscall</text>
+<path class="arr" d="M240 103H355" marker-end="url(#st-arrow)"/><text x="300" y="88" text-anchor="middle" class="small">执行</text>
+<path class="arr" d="M365 137C310 195 265 190 213 147" marker-end="url(#st-arrow)"/><text x="290" y="200" text-anchor="middle" class="small">让出 / 抢占后重新排队</text>
+<path class="arr" d="M540 101L680 55" marker-end="url(#st-arrow)"/><text x="598" y="63" class="small">等待条件</text>
+<path class="arr" d="M690 35C525 -5 232 -2 150 76" marker-end="url(#st-arrow)"/><text x="400" y="27" class="small">条件满足 → ready</text>
+<path class="arr" d="M540 130L680 181" marker-end="url(#st-arrow)"/><text x="576" y="171" class="small">进入调用</text>
+<text x="472" y="245" text-anchor="middle" class="small">syscall 返回：拿到 P 可恢复；否则重新等待调度。函数结束 → dead。</text>
+</svg>
+<figcaption>教学状态图，省略 GC 扫描位、栈复制和特殊抢占状态。runnable 不代表已经在 CPU 上执行。</figcaption>
+</figure>
+<h3>任务放在哪里？</h3>
+<p>每个 P 有本地运行队列。此版本的环形队列是 <code>[256]guintptr</code>，并另有一个 <code>runnext</code> 槽位。全局运行队列由调度器维护；等待中的 G 则由对应的等待结构记录，<strong>不在 runnable 队列里排队消耗 CPU</strong>。</p>
+<p><code>runnext</code> 为当前 P 提供下一次优先运行的候选，常用于缩短相关 G 之间的交接延迟。它不是“立即执行”承诺，候选还可能被替换或窃取。在 Go 1.23.4 中，本地环形队列容量为 256；队列满时，<code>runqputslow</code> 将队列前半部分的 <strong>128 个 G</strong>，连同待入队的 <strong>1 个 G</strong>，共 <strong>129 个 G</strong> 转移到全局运行队列。待入队的 G 也可能是被 <code>runnext</code> 替换出来的旧候选，不一定是刚创建的 G。</p>
+<p>找任务也不是永远机械执行“本地 → 全局 → 窃取”。<code>findRunnable</code> 会处理 GC、安全点、timer 等条件；还会周期性优先检查全局队列以改善公平性。本版本条件里有 <code>schedtick % 61 == 0</code>，这是实现策略，不是业务可以依赖的调度顺序。</p>
+<p class="source">依据：<a data-src="src/runtime/runtime2.go" data-line="35" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/runtime2.go#L35">G 状态定义</a>、<a data-src="src/runtime/runtime2.go" data-line="649" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/runtime2.go#L649">P 与队列字段</a>、<a data-src="src/runtime/proc.go" data-line="6696" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6696">runqput / runqputslow</a>、<a data-src="src/runtime/proc.go" data-line="3249" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3249">findRunnable</a>。</p>
+</section>
+
+<section id="playground">
+<h2><span class="n">03</span>选一个场景，逐步看它发生</h2>
+<p>观察 <strong>G 的状态、M 是否可用，以及 P 在谁手里</strong>。默认 GOMAXPROCS=2，每个场景独立开始。</p>
+<div class="explorer" id="scheduler-explorer">
+<div class="state-legend" aria-label="任务状态颜色"><span class="legend-ready">runnable · 可运行</span><span class="legend-running">running · 执行中</span><span class="legend-waiting">waiting / syscall · 等待或调用中</span></div>
+<div class="controls">
+<label for="scenario">调度场景</label>
+<select id="scenario" aria-label="选择调度场景">
+<option value="create">创建一个 G</option><option value="park">等待 channel</option><option value="net">等待网络 I/O</option><option value="syscall">阻塞系统调用</option><option value="steal">工作窃取</option><option value="preempt">计算任务被抢占</option><option value="idle">自旋、休眠与唤醒</option><option value="yield">Gosched 主动让出</option>
+</select>
+<button id="prev" type="button">上一步</button><button id="next" class="primary" type="button">下一步</button><button id="play" type="button" aria-pressed="false">自动播放</button><button id="reset" type="button">重置</button>
+<span id="step-count" class="stepcount">1 / 4</span>
+</div>
+<div class="scene-scroll" tabindex="0" aria-label="调度图，小屏可横向滚动"><svg viewBox="0 0 960 490" role="img" aria-labelledby="sim-title sim-desc">
+<title id="sim-title">GMP 调度场景演示</title><desc id="sim-desc">用下方步骤说明读取当前场景。</desc>
+<rect class="box m-resource" x="20" y="18" width="445" height="130" rx="12"/><rect class="box m-resource" x="495" y="18" width="445" height="130" rx="12"/>
+<text id="m0-label" x="40" y="48" class="label">M0 · 持有 P0</text><text id="m1-label" x="515" y="48" class="label">M1 · 持有 P1</text>
+<text x="40" y="123" class="small">当前执行</text><text x="515" y="123" class="small">当前执行</text>
+<rect id="p0-box" class="pbox" x="20" y="167" width="445" height="155" rx="12"/><rect id="p1-box" class="pbox" x="495" y="167" width="445" height="155" rx="12"/>
+<text id="p0-label" x="40" y="193" class="label">P0 · 运行 (_Prunning)</text><text id="p1-label" x="515" y="193" class="label">P1 · 运行 (_Prunning)</text>
+<text id="p0-owner" x="40" y="216" class="small">M0 持有</text><text id="p1-owner" x="515" y="216" class="small">M1 持有</text>
+<text x="40" y="306" class="small">本地队列</text><text x="333" y="306" class="small">runnext</text><text x="515" y="306" class="small">本地队列</text><text x="808" y="306" class="small">runnext</text>
+<rect class="box wait-zone" x="20" y="330" width="445" height="135" rx="12"/><rect class="box ready-zone" x="495" y="330" width="445" height="135" rx="12"/>
+<text id="waiting-label" x="40" y="360" class="label">等待区 · 不占普通 Go 执行名额</text><text x="515" y="360" class="label">全局运行队列 · 就绪 G</text>
+<g id="tokens"></g>
+</svg></div>
+<div class="step-text" aria-live="polite" aria-atomic="true"><h3 id="step-title">G1 正在执行</h3><p id="step-body">M0 持有 P0，执行 G1。选择场景并逐步观察任务的创建、等待与恢复。</p><a id="step-source" class="source" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4974">对应源码</a></div>
+<p class="scenario-note" id="scenario-note"></p>
+<p class="subtle">机制示意，非 trace 回放；编号与时间比例不对应真实运行。</p>
+<noscript><p>浏览器未启用 JavaScript，交互图无法播放。后续源码与正文仍可阅读。</p></noscript>
+<div class="print-steps" id="print-steps"></div>
+</div>
+<h3>三个“阻塞”，必须分开看</h3>
+<div class="table-wrap"><table><thead><tr><th>情况</th><th>G / M / P 的主要变化</th><th>适用边界</th></tr></thead><tbody>
+<tr><td>channel / timer / 运行时同步等待</td><td>G 挂起；普通情况下 M 保留 P，去调度另一个 G。</td><td>某些锁先短暂自旋，再进入等待；不是每次调用都必然 park。</td></tr>
+<tr><td>运行时网络轮询支持的 I/O</td><td>未完成时挂起 G，事件到来再让它就绪；无需每个连接专占一个阻塞线程。</td><td>Linux 常见 epoll，Windows 是 IOCP 等平台实现；不能推成“所有文件或所有 I/O 都这样”。</td></tr>
+<tr><td>被运行时正确标注的阻塞系统调用 / 部分 cgo 路径</td><td>G 随 M 在调用中，P 可脱离并交给其他 M；返回后先尝试取得 P。</td><td>普通 syscall 入口与已知阻塞入口的交接时机不同；不能假设任何原始调用都会自动获得同样处理。</td></tr>
+</tbody></table></div>
+<p class="source">依据：<a data-src="src/runtime/proc.go" data-line="4068" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4068">park_m</a>、<a data-src="src/runtime/netpoll.go" data-line="548" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/netpoll.go#L548">netpollblock</a>、<a data-src="src/runtime/netpoll_windows.go" data-line="1" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/netpoll_windows.go#L1">Windows 网络轮询</a>、<a data-src="src/runtime/proc.go" data-line="4390" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4390">reentersyscall</a>。</p>
+</section>
+
+<section id="source">
+<h2><span class="n">04</span>沿一条执行主线，看代码怎样实现</h2>
+<p>不用一次读完几千行 <code>proc.go</code>。先把“创建 → 找任务 → 执行 → 停下 → 再调度”串起来，然后按场景展开。以下带行号的代码是<strong>固定版本原文节选</strong>；省略处会分成独立片段。中文伪代码明确标注，不可当作原实现编译。</p>
+<figure class="diagram">
+<svg viewBox="0 0 940 235" role="img" aria-labelledby="chain-title chain-desc">
+<title id="chain-title">调度主调用关系</title><desc id="chain-desc">go 语句由编译器接入 newproc，生成 G 后入队。schedule 通过 findRunnable 找到任务，再调用 execute。execute 更新状态，并在内部调用 gogo 恢复 G 的执行上下文，不正常返回到 schedule。G 等待时通过 gopark 和 mcall 转到 g0 栈上的 park_m，再调用 schedule。</desc>
+<defs><marker id="ch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="var(--muted)"/></marker></defs>
+<rect class="pbox" x="15" y="30" width="185" height="54" rx="8"/><text x="107" y="64" text-anchor="middle" class="label">newproc → 入队</text>
+<path class="arr" d="M206 57H252" marker-end="url(#ch-arrow)"/>
+<rect class="box" x="265" y="30" width="180" height="54" rx="8"/><text x="355" y="64" text-anchor="middle" class="label">schedule</text>
+<path class="arr" d="M451 57H497" marker-end="url(#ch-arrow)"/>
+<rect class="box" x="510" y="30" width="180" height="54" rx="8"/><text x="600" y="64" text-anchor="middle" class="label">findRunnable</text>
+<path class="arr" d="M696 57H742" marker-end="url(#ch-arrow)"/>
+<rect class="pbox" x="755" y="30" width="170" height="54" rx="8"/><text x="840" y="64" text-anchor="middle" class="label">execute → gogo</text>
+<path class="arr" d="M840 90V127H515" marker-end="url(#ch-arrow)"/>
+<rect class="box" x="305" y="140" width="600" height="60" rx="8"/><text x="605" y="176" text-anchor="middle" class="label">G 等待：gopark → mcall → park_m（g0）</text>
+<path class="arr" d="M300 170H230V100H355V90" marker-end="url(#ch-arrow)"/>
+<text x="42" y="207" class="small">箭头表示调用 / 交接关系，不是每次执行都经过的唯一顺序。</text>
+</svg>
+</figure>
+<h3>4.1 数据结构：把任务、线程、执行资源分别保存</h3>
+<p><code>g</code> 的 <code>stack</code> 表示栈范围，<code>sched</code> 保存恢复执行所需的上下文，<code>atomicstatus</code> 保存状态。<code>m</code> 持有 <code>curg</code>、<code>g0</code>、<code>p</code> 等关联；<code>p</code> 持有自己的队列。它们是相互引用的运行时对象，不是三个独立工作的“调度线程”。</p>
+<p><strong>g0 为什么出现？</strong>每个 M 有自己的系统栈，调度器的一部分工作在这里完成。<code>mcall</code> 保存当前 G 的执行位置并转到 g0；等选好下一项工作，再用 <code>gogo</code> 恢复目标 G 的上下文。可把它理解为“先把工单进度收好，再到调度台挑下一张”，但真实实现依赖寄存器、栈指针与架构相关汇编。</p>
+<p class="source"><a data-src="src/runtime/runtime2.go" data-line="422" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/runtime2.go#L422">g / m / p 定义</a> · <a data-src="src/runtime/asm_amd64.s" data-line="404" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/asm_amd64.s#L404">amd64：gogo 与 mcall</a> · <a data-src="src/runtime/HACKING.md" data-line="54" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/HACKING.md#L54">系统栈说明</a></p>
+
+<h3>4.2 创建：go f() 不承诺 f 立刻执行</h3>
+<div class="chain"><code>go f()</code><span>编译器接入 →</span><code>newproc</code><span>→</span><code>newproc1</code><span>→</span><code>runqput</code><span>→</span><code>wakep</code></div>
+<figure class="source-code"><figcaption><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4974-L4987">src/runtime/proc.go · Go 1.23.4 · L4974–L4987</a></figcaption><pre><code><span class="code-line"><b>4974</b>func newproc(fn *funcval) {</span>
+<span class="code-line"><b>4975</b>	gp := getg()</span>
+<span class="code-line"><b>4976</b>	pc := getcallerpc()</span>
+<span class="code-line"><b>4977</b>	systemstack(func() {</span>
+<span class="code-line"><b>4978</b>		newg := newproc1(fn, gp, pc, false, waitReasonZero)</span>
+<span class="code-line"><b>4979</b></span>
+<span class="code-line"><b>4980</b>		pp := getg().m.p.ptr()</span>
+<span class="code-line"><b>4981</b>		runqput(pp, newg, true)</span>
+<span class="code-line"><b>4982</b></span>
+<span class="code-line"><b>4983</b>		if mainStarted {</span>
+<span class="code-line"><b>4984</b>			wakep()</span>
+<span class="code-line"><b>4985</b>		}</span>
+<span class="code-line"><b>4986</b>	})</span>
+<span class="code-line"><b>4987</b>}</span></code></pre></figure>
+<p>① <code>newproc1</code> 从空闲 G 中复用对象，必要时分配，准备栈与入口，把它设成 runnable。② <code>runqput(pp, newg, true)</code> 尝试把它放入当前 P 的 runnext；已有候选可能被挤入普通队列。③ <code>wakep</code> 在需要且有资源时唤醒工作线程，<strong>不是每创建一个 G 就创建一个 M</strong>。</p>
+<p>调用者随后继续执行与新 G 得到执行，是两个不同事件。因此 <code>go f(); g()</code> 中，不能仅凭书写顺序推断 f 与 g 的业务先后。</p>
+<p class="source"><a data-src="src/runtime/proc.go" data-line="4974" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4974">原文：newproc / newproc1</a> · <a data-src="src/runtime/proc.go" data-line="3089" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3089">wakep</a> · <a data-src="src/cmd/compile/internal/ssagen/ssa.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/cmd/compile/internal/ssagen/ssa.go">编译器接入：搜索 newproc</a></p>
+
+<h3>4.3 调度：找一个 G，再恢复它的执行现场</h3>
+<pre><code>// 教学伪代码：省略 GC、安全点、timer、trace 及唤醒等分支
+schedule:
+    确保当前 M 可以执行调度
+    gp, inheritTime, _ = findRunnable() // 找不到工作时也可能休眠
+    execute(gp, inheritTime) // 绑定 M、切换状态；内部调用 gogo，不正常返回</code></pre>
+<p><code>findRunnable</code> 会从多个来源找可执行任务：本地队列、全局队列、网络轮询返回的任务、其他 P 的可窃取任务，以及特定运行时工作。下面保留它“照顾全局公平性”的真实片段，说明为什么不能背成一条固定查找顺序。</p>
+<figure class="source-code"><figcaption><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3298-L3306">src/runtime/proc.go · Go 1.23.4 · L3298–L3306</a></figcaption><pre><code><span class="code-line"><b>3298</b>	if pp.schedtick%61 == 0 &amp;&amp; sched.runqsize &gt; 0 {</span>
+<span class="code-line"><b>3299</b>		lock(&amp;sched.lock)</span>
+<span class="code-line"><b>3300</b>		gp := globrunqget(pp, 1)</span>
+<span class="code-line"><b>3301</b>		unlock(&amp;sched.lock)</span>
+<span class="code-line"><b>3302</b>		if gp != nil {</span>
+<span class="code-line"><b>3303</b>			return gp, false, false</span>
+<span class="code-line"><b>3304</b>		}</span>
+<span class="code-line"><b>3305</b>	}</span>
+<span class="code-line"><b>3306</b></span></code></pre></figure>
+<p><code>runqget</code> 会先取 runnext，再尝试本地环形队列。<code>execute</code> 设好 <code>mp.curg</code> 与 <code>gp.m</code>，完成 runnable → running，最后在函数内部调用 <code>gogo(&amp;gp.sched)</code> 恢复 G 的执行上下文。<code>execute</code> 不会正常返回到 <code>schedule</code>，再由后者调用 <code>gogo</code>。任务被唤醒到 runnable，与最终获得执行机会，是两个不同阶段。</p>
+<figure class="source-code"><figcaption><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3220-L3228">src/runtime/proc.go · Go 1.23.4 · L3220–L3228</a></figcaption><pre><code><span class="code-line"><b>3220</b>	mp.curg = gp</span>
+<span class="code-line"><b>3221</b>	gp.m = mp</span>
+<span class="code-line"><b>3222</b>	casgstatus(gp, _Grunnable, _Grunning)</span>
+<span class="code-line"><b>3223</b>	gp.waitsince = 0</span>
+<span class="code-line"><b>3224</b>	gp.preempt = false</span>
+<span class="code-line"><b>3225</b>	gp.stackguard0 = gp.stack.lo + stackGuard</span>
+<span class="code-line"><b>3226</b>	if !inheritTime {</span>
+<span class="code-line"><b>3227</b>		mp.p.ptr().schedtick++</span>
+<span class="code-line"><b>3228</b>	}</span></code></pre></figure>
+<p class="source"><a data-src="src/runtime/proc.go" data-line="3966" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3966">schedule</a> · <a data-src="src/runtime/proc.go" data-line="3249" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3249">findRunnable 完整实现</a> · <a data-src="src/runtime/proc.go" data-line="6819" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6819">runqget</a> · <a data-src="src/runtime/proc.go" data-line="3208" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3208">execute</a></p>
+
+<h3>4.4 挂起与唤醒：停的是 G，未必是 M</h3>
+<div class="chain"><code>gopark</code><span>→</span><code>mcall(park_m)</code><span>→</span><code>running → waiting</code><span>→</span><code>schedule</code></div>
+<figure class="source-code"><figcaption><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4079-L4086">src/runtime/proc.go · Go 1.23.4 · L4079–L4086</a></figcaption><pre><code><span class="code-line"><b>4079</b>	// N.B. Not using casGToWaiting here because the waitreason is</span>
+<span class="code-line"><b>4080</b>	// set by park_m&#x27;s caller.</span>
+<span class="code-line"><b>4081</b>	casgstatus(gp, _Grunning, _Gwaiting)</span>
+<span class="code-line"><b>4082</b>	if trace.ok() {</span>
+<span class="code-line"><b>4083</b>		traceRelease(trace)</span>
+<span class="code-line"><b>4084</b>	}</span>
+<span class="code-line"><b>4085</b></span>
+<span class="code-line"><b>4086</b>	dropg()</span></code></pre></figure>
+<p>实际代码在转状态前后还处理跟踪与解锁回调。核心含义是：把当前 G 从 M 的当前任务位置卸下，登记在相应等待结构里，再调度其他任务。普通 channel 等待<strong>不要求把这个 P 交给另一个线程</strong>。</p>
+<p>条件满足后，相关代码通过 <code>goready / ready</code> 等路径把 G 变成 runnable 并安排入队。<strong>ready 不等于立即 running。</strong>还要等一个持有 P 的 M 选择它。</p>
+<p>网络等待复用了这个思想：<code>netpollblock</code> 在需要等待时调用 <code>gopark</code>；事件到来后由网络轮询相关路径让任务就绪。CPU 不会持续执行这个 G 去“盯着网络”。线程层面在无工作时也可能阻塞于事件等待，这与“每条连接一个阻塞线程”不同。</p>
+<p class="source"><a data-src="src/runtime/proc.go" data-line="407" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L407">gopark</a> · <a data-src="src/runtime/proc.go" data-line="4068" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4068">park_m</a> · <a data-src="src/runtime/proc.go" data-line="1022" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L1022">ready</a> · <a data-src="src/runtime/netpoll.go" data-line="548" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/netpoll.go#L548">netpollblock</a></p>
+
+<h3>4.5 系统调用：M 被占用，P 还可以继续服务其他 G</h3>
+<p>以被运行时标注的 syscall 路径为例，<code>reentersyscall</code> 先保存栈指针、程序位置，把 G 改为 <code>_Gsyscall</code>；M 和 P 分离，P 标为 <code>_Psyscall</code>，为快速返回保留关联线索。</p>
+<p>这不等于“任何 syscall 一进入，就立刻新建 M 并完成 P 转交”。普通入口允许快速返回后重取原 P；<code>sysmon → retake</code> 会在条件合适时回收 syscall 中的 P。带已知阻塞提示的 <code>entersyscallblock</code> 则走更积极的交接路径。</p>
+<figure class="source-code"><figcaption><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4588-L4596">src/runtime/proc.go · Go 1.23.4 · L4588–L4596</a></figcaption><pre><code><span class="code-line"><b>4588</b>func entersyscallblock_handoff() {</span>
+<span class="code-line"><b>4589</b>	trace := traceAcquire()</span>
+<span class="code-line"><b>4590</b>	if trace.ok() {</span>
+<span class="code-line"><b>4591</b>		trace.GoSysCall()</span>
+<span class="code-line"><b>4592</b>		traceRelease(trace)</span>
+<span class="code-line"><b>4593</b>	}</span>
+<span class="code-line"><b>4594</b>	handoffp(releasep())</span>
+<span class="code-line"><b>4595</b>}</span>
+<span class="code-line"><b>4596</b></span></code></pre></figure>
+<p>返回时 <code>exitsyscallfast</code> 尝试拿回原 P 或空闲 P。成功就能继续；不成功就转慢路径，使 G 重新等待调度，当前 M 也可能停下来。<strong>G 可以稍后在另一个 M 上继续运行</strong>，普通业务代码不应依赖线程身份。</p>
+<div class="note">系统调用多时“线程数比 GOMAXPROCS 大”本身不矛盾。需要继续判断调用是不是该阻塞、并发是不是失控。<code>LockOSThread</code>、cgo 回调等路径涉及线程绑定等特殊规则，需要分别确认其调度行为。</div>
+<p class="source"><a data-src="src/runtime/proc.go" data-line="4390" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4390">reentersyscall</a> · <a data-src="src/runtime/proc.go" data-line="4540" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4540">entersyscallblock</a> · <a data-src="src/runtime/proc.go" data-line="6201" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6201">retake</a> · <a data-src="src/runtime/proc.go" data-line="4617" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4617">exitsyscall</a></p>
+
+<h3>4.6 工作窃取：移动就绪任务，不抢走正在执行的栈</h3>
+<p>当自己的工作不足，持有 P 的 M 可以尝试从其他 P 的队列取一批 runnable G。此版本的 <code>runqgrab</code> 通常以大约一半任务为目标；<code>runqsteal</code> 返回其中一个供调用方执行，其余 G 加入<strong>窃取方 P 的本地运行队列</strong>。真实结果受竞争、队列内容及 runnext 处理影响。</p>
+<h4>目标 P 怎样选？</h4>
+<p><code>stealOrder</code> 用伪随机起点和<strong>与 P 总数互质的步长</strong>构造遍历顺序。每走一步计算 <code>(当前位置 + 步长) % P总数</code>，使一轮内不重复地覆盖所有 P；<code>stealWork</code> 再跳过当前 P 等不适合的目标。</p>
+<p>例如有 6 个 P，起点为 2、步长为 5，得到的序列为：</p>
+<div class="chain" aria-label="六个 P 的遍历示例"><code>2</code><span>→</span><code>1</code><span>→</span><code>0</code><span>→</span><code>5</code><span>→</span><code>4</code><span>→</span><code>3</code></div>
+<p>它不需要先生成一个全局打乱队列。不同 M 可以得到不同的顺序，以分散固定扫描顺序带来的竞争倾向；序列也可能重合，不能据此断言完全没有争用。</p>
+<p>Go 1.23.4 的 <code>stealWork</code> 最多尝试 <strong>4 轮</strong>，找到任务就提前返回。前三轮尝试普通运行队列；最后一轮仍尝试普通队列，并额外允许检查目标 P 的 timer、尝试窃取 <code>runnext</code>。网络轮询在外围调度路径中，不属于“后两轮网络确认”。</p>
+<p class="source"><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3654">stealWork：四轮尝试</a> · <a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L7180">randomOrder / randomEnum：互质步长遍历</a></p>
+<p>这里窃取的是<strong>可运行任务</strong>，不是把另一个 M 正在运行的 G 从指令中间直接抢过来。窃取成功也不创造 CPU 算力，只改善工作分布。若其他 P 也没有可用任务，调度器会进入更完整的等待与唤醒协议，而不是无休止耗 CPU 找工作。</p>
+<p class="source"><a data-src="src/runtime/proc.go" data-line="3654" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3654">stealWork</a> · <a data-src="src/runtime/proc.go" data-line="6885" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6885">runqgrab 附近实现</a> · <a data-src="src/runtime/proc.go" data-line="6940" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6940">runqsteal</a></p>
+
+<h3 id="idle">4.7 自旋与唤醒：找不到工作，为什么不直接睡？</h3>
+<p>先想一个取舍：M 一旦没任务就休眠，下一个任务到来时又要唤醒线程；一直不睡，又会白白消耗 CPU。Go 让部分工作线程暂时处于 <strong>spinning（自旋寻找工作）</strong>状态，在有限的寻找过程后再决定是否休眠。</p>
+<p>这里的自旋是<strong>调度器找工作</strong>，与 Mutex 竞争时的短暂自旋是两件事。一个 M 本地没活后，会检查全局任务、非阻塞网络事件等来源；进入自旋寻找阶段时，还会尝试其他 P 的队列、timer 或可用 GC 工作。找到工作就退出自旋，恢复执行；持续没找到，才走释放 P、再次检查、等待事件或休眠的路径。</p>
+<p>为避免太多 M 一起空转，<code>findRunnable</code> 对进入相关自旋分支设置了门槛：</p>
+<figure class="source-code"><figcaption><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3359-L3380">src/runtime/proc.go · Go 1.23.4 · L3359–L3380</a></figcaption><pre><code><span class="code-line"><b>3359</b>	if mp.spinning || 2*sched.nmspinning.Load() &lt; gomaxprocs-sched.npidle.Load() {</span>
+<span class="code-line"><b>3360</b>		if !mp.spinning {</span>
+<span class="code-line"><b>3361</b>			mp.becomeSpinning()</span>
+<span class="code-line"><b>3362</b>		}</span>
+<span class="code-line"><b>3363</b></span>
+<span class="code-line"><b>3364</b>		gp, inheritTime, tnow, w, newWork := stealWork(now)</span>
+<span class="code-line"><b>3365</b>		if gp != nil {</span>
+<span class="code-line"><b>3366</b>			// Successfully stole.</span>
+<span class="code-line"><b>3367</b>			return gp, inheritTime, false</span>
+<span class="code-line"><b>3368</b>		}</span>
+<span class="code-line"><b>3369</b>		if newWork {</span>
+<span class="code-line"><b>3370</b>			// There may be new timer or GC work; restart to</span>
+<span class="code-line"><b>3371</b>			// discover.</span>
+<span class="code-line"><b>3372</b>			goto top</span>
+<span class="code-line"><b>3373</b>		}</span>
+<span class="code-line"><b>3374</b></span>
+<span class="code-line"><b>3375</b>		now = tnow</span>
+<span class="code-line"><b>3376</b>		if w != 0 &amp;&amp; (pollUntil == 0 || w &lt; pollUntil) {</span>
+<span class="code-line"><b>3377</b>			// Earlier timer to wait for.</span>
+<span class="code-line"><b>3378</b>			pollUntil = w</span>
+<span class="code-line"><b>3379</b>		}</span>
+<span class="code-line"><b>3380</b>	}</span></code></pre></figure>
+<p>其中 <code>gomaxprocs - npidle</code> 表示当前非空闲 P 的数量。这个条件表达的是<strong>限制额外找工作的线程数量</strong>，不能解释成“任意瞬间，自旋 M 数都严格不超过忙碌 P 的一半”：已有自旋 M、唤醒过程中的计数和其他协调路径都要一起考虑。</p>
+<h4>新工作来了，谁负责叫醒 M？</h4>
+<p><code>wakep()</code> 的核心判断是：<strong>存在空闲 P，且没有已登记的自旋 M</strong>时，才尝试安排一个 M 去工作。如果已经有 M 在找任务，就先依靠它，减少多个线程反复醒来又睡下的开销。取得 P 后，<code>startm</code> 会复用空闲 M，必要时才创建新 M。</p>
+<p>但这带来了一个更重要的正确性问题：提交者以为“有人还在找”，寻找者却恰好准备睡下，两边都不再负责唤醒，任务就可能被晾在队列里。为此，运行时对双方的操作顺序作了配合。</p>
+<figure class="diagram">
+<svg viewBox="0 0 940 335" role="img" aria-labelledby="wake-title wake-desc">
+<title id="wake-title">提交工作与退出自旋的配合</title><desc id="wake-desc">提交者先发布工作，再经过内存屏障检查自旋计数。寻找者先减少自旋计数，再经过内存屏障重新检查工作来源；发现任务后恢复找工作，否则才能继续休眠。两条路径并发执行。</desc>
+<defs><marker id="wake-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="var(--accent)"/></marker></defs>
+<text x="245" y="28" text-anchor="middle" class="label">提交新工作的一方</text><text x="695" y="28" text-anchor="middle" class="label">准备退出自旋的 M</text>
+<rect class="box ready-zone" x="50" y="48" width="390" height="60"/><text x="245" y="84" text-anchor="middle" class="label">先把 G / timer 等工作发布出去</text>
+<rect class="pbox" x="500" y="48" width="390" height="60"/><text x="695" y="84" text-anchor="middle" class="label">先减少自旋计数 nmspinning</text>
+<path class="arr" d="M245 113V145M695 113V145" marker-end="url(#wake-arrow)"/>
+<rect class="box" x="50" y="153" width="390" height="56"/><text x="245" y="187" text-anchor="middle" class="label">内存屏障 → 检查自旋计数</text>
+<rect class="box" x="500" y="153" width="390" height="56"/><text x="695" y="187" text-anchor="middle" class="label">内存屏障 → 再检查工作来源</text>
+<path class="arr" d="M245 214V246M695 214V246" marker-end="url(#wake-arrow)"/>
+<rect class="box m-resource" x="50" y="254" width="390" height="60"/><text x="245" y="290" text-anchor="middle" class="label">需要时尝试唤醒一个 M</text>
+<rect class="box m-resource" x="500" y="254" width="390" height="60"/><text x="695" y="280" text-anchor="middle" class="label">有工作：恢复寻找 / 执行</text><text x="695" y="302" text-anchor="middle" class="small">确实无工作：继续事件等待或休眠</text>
+</svg>
+<figcaption>两列各有操作顺序，列与列之间没有固定的执行先后。全局队列与不同工作来源还包含各自的加锁、唤醒细节。</figcaption>
+</figure>
+<p>这解释了为什么“看一眼队列，空了就睡”不够。退出自旋、工作发布和唤醒之间有竞争窗口，<code>needspinning</code> 等状态还会参与协调。无需记住所有原子指令，但要理解：<strong>减少空转是性能策略，防止漏掉工作是正确性要求。</strong></p>
+<p>实际排查时，短暂出现 spinning thread 属于正常行为；如果怀疑空转耗 CPU，需要结合 profile、调度摘要和任务负载确认。不能只看到 <code>spinningthreads</code> 非零就认为有异常。</p>
+<p class="source"><a data-src="src/runtime/proc.go" data-line="56" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L56">休眠 / 唤醒协议</a> · <a data-src="src/runtime/proc.go" data-line="3354" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3354">自旋门槛</a> · <a data-src="src/runtime/proc.go" data-line="3454" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3454">退出自旋前的重新检查</a> · <a data-src="src/runtime/proc.go" data-line="3089" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3089">wakep</a> · <a data-src="src/runtime/proc.go" data-line="3847" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3847">resetspinning</a></p>
+
+<h3 id="netpoll">4.8 Netpoller：由谁调用，什么时候调用？</h3>
+<p>网络事件需要线程去取，但这个线程身份可以变化。Go 不为 Netpoller 固定创建一个永久专职 M；网络轮询由调度路径中的 M 及 <code>sysmon</code> 等路径驱动。</p>
+<figure class="diagram">
+<svg viewBox="0 0 940 365" role="img" aria-labelledby="poll-title poll-desc">
+<title id="poll-title">网络轮询的三条主要驱动路径</title><desc id="poll-desc">寻找任务的 M 可以执行非阻塞 netpoll；工作不足且符合条件的 M 释放 P 后执行阻塞 netpoll；sysmon 会在满足条件时补充非阻塞轮询。平台轮询返回就绪任务后，任务获得 P 或进入队列等待调度。</desc>
+<defs><marker id="poll-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="var(--accent)"/></marker></defs>
+<rect class="box ready-zone" x="15" y="20" width="280" height="100"/><text x="155" y="49" text-anchor="middle" class="label">找任务的 M</text><text x="155" y="79" text-anchor="middle" class="label">netpoll(0)</text><text x="155" y="103" text-anchor="middle" class="small">非阻塞地看看有没有就绪事件</text>
+<rect class="pbox" x="330" y="20" width="280" height="100"/><text x="470" y="49" text-anchor="middle" class="label">工作不足、符合条件的 M</text><text x="470" y="79" text-anchor="middle" class="label">释放 P → netpoll(delay)</text><text x="470" y="103" text-anchor="middle" class="small">可能阻塞，等待事件或截止时间</text>
+<rect class="box m-resource" x="645" y="20" width="280" height="100"/><text x="785" y="49" text-anchor="middle" class="label">sysmon</text><text x="785" y="79" text-anchor="middle" class="label">满足条件 → netpoll(0)</text><text x="785" y="103" text-anchor="middle" class="small">补充轮询，避免长期无人检查</text>
+<path class="arr" d="M155 125V153H470M785 125V153H470M470 125V180" marker-end="url(#poll-arrow)"/>
+<rect class="box ready-zone" x="180" y="188" width="580" height="64"/><text x="470" y="226" text-anchor="middle" class="label">平台实现：Linux epoll / Windows IOCP 等</text>
+<path class="arr" d="M470 258V286" marker-end="url(#poll-arrow)"/>
+<rect class="pbox" x="180" y="295" width="580" height="55"/><text x="470" y="329" text-anchor="middle" class="label">返回就绪 G → 取得 P 或安排入队 → 调度执行</text>
+</svg>
+<figcaption>轮询返回的是可以继续推进的任务；“I/O 就绪”与“G 获得执行机会”仍是两个阶段。</figcaption>
+</figure>
+<div class="table-wrap"><table><thead><tr><th>驱动路径</th><th>何时发生</th><th>拿到任务以后</th></tr></thead><tbody>
+<tr><td><code>findRunnable → netpoll(0)</code></td><td>在寻找任务过程中，轮询已初始化、有等待者且相关轮询状态允许时尝试；这次调用不阻塞。</td><td>可能直接返回一个 G 供当前 M 执行，其余交给任务注入逻辑。</td></tr>
+<tr><td><code>findRunnable → netpoll(delay)</code></td><td>工作不足并走到等待路径，M 已释放 P；共享状态协调是否由它进入阻塞轮询，等待时长可受下一次 timer 截止时间限制。</td><td>返回后尝试取得 P；有 P 时可选任务执行，没有 P 时安排任务入队。</td></tr>
+<tr><td><code>sysmon → netpoll(0)</code></td><td>此版本在已初始化、<code>lastpoll != 0</code> 且距记录的轮询时间超过约 10ms 等条件下，补充非阻塞检查。</td><td>通过 <code>injectglist</code> 注入任务；sysmon 不直接拿 P 执行业务 G。</td></tr>
+</tbody></table></div>
+<p><code>lastpoll</code> 不只是一个时间记录，零值还参与表示阻塞轮询状态。<code>netpollBreak</code> 则能打断已有轮询，例如等待截止时间需要提前时。由谁进入轮询要经过这些协调，不能简单概括为“最后闲下来的线程负责”。</p>
+<p>回到网络请求：G 等待数据时被挂起；某个驱动路径取到平台事件；相关 G 变为 runnable；随后才获得执行。这条链能区分远端等待、事件发现和调度等待。阻塞在轮询里的 M 也不持有 P，因此它不会为了等待网络而占住一个普通 Go 执行名额。</p>
+<p class="source"><a data-src="src/runtime/proc.go" data-line="3339" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3339">非阻塞轮询</a> · <a data-src="src/runtime/proc.go" data-line="3557" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3557">阻塞轮询与返回处理</a> · <a data-src="src/runtime/proc.go" data-line="6116" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6116">sysmon 轮询</a> · <a data-src="src/runtime/proc.go" data-line="3871" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3871">injectglist</a> · <a data-src="src/runtime/netpoll.go" data-line="548" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/netpoll.go#L548">轮询等待 / 唤醒</a> · <a data-src="src/runtime/netpoll_windows.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/netpoll_windows.go">Windows IOCP</a> · <a data-src="src/runtime/netpoll_epoll.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/netpoll_epoll.go">Linux epoll</a></p>
+
+<h3 id="sysmon">4.9 sysmon：调度体系里的后台监控者</h3>
+<p>当执行任务的 M 都很忙，或者某个 M 卡在系统调用中，仍需要有运行时路径观察状态并推动系统。<code>sysmon</code> 在独立的 M 上运行，<strong>不持有 P</strong>；它做监控与协调，不直接承担普通业务 G 的执行。</p>
+<div class="table-wrap"><table><thead><tr><th>职责</th><th>怎么参与</th><th>边界</th></tr></thead><tbody>
+<tr><td>长时间执行的抢占请求</td><td><code>retake → preemptone</code> 检查调度时间片是否长时间未推进，尝试发出请求。</td><td>请求可以延后生效；不是每个 G 精确执行 10ms。</td></tr>
+<tr><td>回收 syscall 中的 P</td><td><code>retake</code> 按 P 状态、syscall tick、是否有其他工作等条件判断，再尝试回收和交接。</td><td>并非发现 syscall 就无条件立即回收。</td></tr>
+<tr><td>补充网络轮询</td><td>在前述时间与状态条件下调用非阻塞 <code>netpoll(0)</code>。</td><td>有阻塞轮询在工作时，会考虑共享的轮询状态。</td></tr>
+<tr><td>检查时间触发 GC</td><td>检查 <code>gcTriggerTime</code>，满足条件时唤醒负责触发 GC 的 goroutine。</td><td>此版本默认 <code>forcegcperiod</code> 为 2 分钟，还要满足 GC 已启用、当前阶段等条件；不是每两分钟直接执行完整 GC。</td></tr>
+<tr><td>配合内存归还与诊断</td><td>收到相关请求时唤醒 scavenger；按配置输出调度摘要等。</td><td>scavenger 承担向 OS 归还内存的工作，不能把它与 GC 或 sysmon 本身混为一谈。</td></tr>
+</tbody></table></div>
+<p>常规循环中，sysmon 从约 <code>20μs</code> 的休眠开始，持续空闲时逐步退避，常规退避上限为 <code>10ms</code>。但当所有 P 空闲或 GC 等条件满足时，它还可能进入更长的事件等待。因此这些数字表示检查策略，<strong>不构成按固定周期精确运行的保证</strong>。</p>
+<p>这也解释了为什么 P 都在执行计算时，仍可能出现抢占请求和网络轮询。它们由运行时监控机制推动，最终响应速度仍受平台调度、安全点和运行时状态影响。</p>
+<p class="source"><a data-src="src/runtime/proc.go" data-line="6043" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6043">sysmon</a> · <a data-src="src/runtime/proc.go" data-line="6024" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6024">forcegcperiod</a> · <a data-src="src/runtime/proc.go" data-line="6201" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6201">retake</a> · <a data-src="src/runtime/mgc.go" data-line="602" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/mgc.go#L602">GC 触发检查</a> · <a data-src="src/runtime/mgcscavenge.go" data-line="5" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/mgcscavenge.go#L5">scavenger 职责</a></p>
+
+<h3 id="stack">4.10 动态栈：栈检查为什么会通向调度器？</h3>
+<p>goroutine 不必像传统线程那样一开始就准备很大的用户栈。它可以从较小的栈开始，需要更多空间时换到更大的连续栈；在安全的时机，满足条件的栈也可以缩小。<strong>一个 G 的内存开销仍然包含栈、运行时对象及其引用的数据</strong>，不能按“G 数量 × 2KB”直接估算整个程序内存。</p>
+<p>“2KB 起步”需要带上平台条件。在此版本中，<code>stackMin = 2048</code>，实际分配还考虑 <code>stackSystem</code> 与向上取整。本机 Windows 基线额外计入 4096 字节，最小分配向上取整到 <strong>8KiB</strong>；其他平台的起始值与后续复用策略应按源码核对。</p>
+<h4>同一条慢路径，处理两种原因</h4>
+<p>编译器会为需要栈检查的函数生成入口检查；具体比较指令还与架构、栈帧大小和编译优化有关，<code>nosplit</code> 等函数存在例外。正常情况下，<code>stackguard0</code> 是用于检查栈空间的边界值。空间不足时进入 <code>morestack</code>，在 g0 系统栈上调用 <code>newstack</code>。</p>
+<p>运行时还会把 <code>stackguard0</code> 设置为特殊值 <code>stackPreempt</code>。这样后续栈检查也会进入慢路径；<code>newstack</code> 识别到它后，知道需要处理的是<strong>抢占请求</strong>，而不一定真的需要扩栈。</p>
+<figure class="diagram">
+<svg viewBox="0 0 940 360" role="img" aria-labelledby="stack-title stack-desc">
+<title id="stack-title">栈检查慢路径如何区分扩栈与同步抢占</title><desc id="stack-desc">需要栈检查的函数在检查失败后进入 morestack 和 g0 上的 newstack。正常空间不足时分配更大栈并复制和调整指针；边界为 stackPreempt 时判断当前是否可抢占，允许则进入调度，不允许则暂时恢复边界继续执行。</desc>
+<defs><marker id="stack-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="var(--accent)"/></marker></defs>
+<rect class="box ready-zone" x="180" y="15" width="580" height="55"/><text x="470" y="49" text-anchor="middle" class="label">函数入口的栈检查失败：空间不足，或设置了抢占标记</text>
+<path class="arr" d="M470 76V105" marker-end="url(#stack-arrow)"/>
+<rect class="pbox" x="240" y="115" width="460" height="55"/><text x="470" y="149" text-anchor="middle" class="label">morestack → newstack（在 g0 上）</text>
+<path class="arr" d="M470 176V201H245V225M470 201H695V225" marker-end="url(#stack-arrow)"/>
+<rect class="pbox" x="45" y="235" width="400" height="105"/><text x="245" y="263" text-anchor="middle" class="label">普通栈空间不足</text><text x="245" y="292" text-anchor="middle" class="label">分配更大的栈 → 复制存活内容</text><text x="245" y="319" text-anchor="middle" class="small">调整相关指针，恢复执行</text>
+<rect class="box m-resource" x="495" y="235" width="400" height="105"/><text x="695" y="263" text-anchor="middle" class="label">stackguard0 == stackPreempt</text><text x="695" y="292" text-anchor="middle" class="label">允许抢占 → 进入调度路径</text><text x="695" y="319" text-anchor="middle" class="small">暂不允许 → 恢复边界，保留请求后继续</text>
+</svg>
+<figcaption>简化后的分支关系。<code>morestack</code> 的名字不能用来断定这次一定发生了栈扩容。</figcaption>
+</figure>
+<figure class="source-code"><figcaption><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/stack.go#L1035-L1043">src/runtime/stack.go · Go 1.23.4 · L1035–L1043</a></figcaption><pre><code><span class="code-line"><b>1035</b>	preempt := stackguard0 == stackPreempt</span>
+<span class="code-line"><b>1036</b>	if preempt {</span>
+<span class="code-line"><b>1037</b>		if !canPreemptM(thisg.m) {</span>
+<span class="code-line"><b>1038</b>			// Let the goroutine keep running for now.</span>
+<span class="code-line"><b>1039</b>			// gp-&gt;preempt is set, so it will be preempted next time.</span>
+<span class="code-line"><b>1040</b>			gp.stackguard0 = gp.stack.lo + stackGuard</span>
+<span class="code-line"><b>1041</b>			gogo(&amp;gp.sched) // never return</span>
+<span class="code-line"><b>1042</b>		}</span>
+<span class="code-line"><b>1043</b>	}</span></code></pre></figure>
+<p>真正扩栈时，<code>newstack</code> 以倍增为基础计算目标大小，必要时继续放大以容纳所需栈帧，再由 <code>copystack</code> 复制内容并修正相关指针。缩栈则要满足安全性、使用量等条件，不会每退出一个函数就立即发生。</p>
+<p>同步抢占完成后，G 以后仍能从保存的现场继续。现在就能解释 <code>execute</code> 中的 <code>gp.stackguard0 = gp.stack.lo + stackGuard</code>：它恢复普通栈检查边界，清掉作为本次请求入口的特殊值；后续仍可产生新的抢占请求。</p>
+<p class="source"><a data-src="src/runtime/stack.go" data-line="68" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/stack.go#L68">最小栈与平台空间</a> · <a data-src="src/runtime/proc.go" data-line="4954" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4954">malg</a> · <a data-src="src/runtime/asm_amd64.s" data-line="580" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/asm_amd64.s#L580">morestack</a> · <a data-src="src/runtime/stack.go" data-line="976" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/stack.go#L976">newstack</a> · <a data-src="src/runtime/stack.go" data-line="868" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/stack.go#L868">copystack</a> · <a data-src="src/runtime/stack.go" data-line="1193" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/stack.go#L1193">shrinkstack</a></p>
+
+<h3 id="preemption">4.11 异步抢占：没有函数调用的计算循环，怎样停下来？</h3>
+<p>同步栈检查要等程序走到相关检查位置。一个长时间不调用函数的计算循环，可能长时间碰不到这样的机会。Go 1.14 引入异步抢占，使这类循环不再容易拖住调度或显著延迟 GC；具体支持范围以平台与版本为准。</p>
+<p>触发线索仍来自 <code>sysmon → retake → preemptone</code>。此版本中，<code>retake</code> 观察同一调度时间片持续过久时请求抢占：</p>
+<figure class="source-code"><figcaption><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6197-L6199">src/runtime/proc.go · Go 1.23.4 · L6197–L6199</a></figcaption><pre><code><span class="code-line"><b>6197</b>// forcePreemptNS is the time slice given to a G before it is</span>
+<span class="code-line"><b>6198</b>// preempted.</span>
+<span class="code-line"><b>6199</b>const forcePreemptNS = 10 * 1000 * 1000 // 10ms</span></code></pre></figure>
+<p>10ms 是监控判定的阈值线索。发起检查、送达通知和找到可安全暂停的位置都需要时间；它不是固定的 G 时间片上限，也不保证定时器或其他任务在 10ms 内运行。</p>
+<div class="table-wrap"><table><thead><tr><th>阶段</th><th>Unix 常见实现</th><th>Windows 实现</th></tr></thead><tbody>
+<tr><td>提出请求</td><td colspan="2"><code>preemptone</code> 设置抢占相关状态；平台支持且未关闭异步抢占时，调用 <code>preemptM</code>。</td></tr>
+<tr><td>获得目标执行现场</td><td>向目标 M 发送抢占信号，常用 <code>SIGURG</code>；信号处理路径检查目标 G。</td><td>使用线程句柄挂起目标线程、读取其上下文，再作检查。</td></tr>
+<tr><td>判断是否能暂停</td><td colspan="2">检查目标是否为用户 G、M 当前状态是否允许、栈空间是否足够，以及 PC 是否处在编译器和运行时认可的异步安全点。</td></tr>
+<tr><td>安排进入抢占入口</td><td>调整信号上下文，使恢复时进入 <code>asyncPreempt</code>。</td><td>调整并设置线程上下文，再恢复线程。</td></tr>
+<tr><td>转入调度</td><td colspan="2"><code>asyncPreempt</code> 保存用户寄存器，调用 <code>asyncPreempt2</code>，再按请求进入普通重新调度或特殊暂停路径。</td></tr>
+</tbody></table></div>
+<p>Unix 的“注入”指修改保存的执行上下文，让目标恢复时经过抢占入口，不是修改业务机器码。普通重新调度路径可概括为：</p>
+<div class="chain"><code>asyncPreempt</code><span>→</span><code>asyncPreempt2</code><span>→</span><code>mcall(gopreempt_m)</code><span>→</span><code>goschedImpl(gp, true)</code></div>
+<h4>为什么需要安全点？</h4>
+<p>暂停后的运行时必须能保存和恢复现场，也要能正确识别栈与寄存器中的指针。停在运行时临界操作、尚未形成一致状态的指令序列或缺少必要元数据的位置，都可能破坏这些要求。因此 <code>isAsyncSafePoint</code> 会过滤不安全的位置，部分可重启序列还会调整恢复 PC。</p>
+<figure class="source-code"><figcaption><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/preempt.go#L287-L289">src/runtime/preempt.go · Go 1.23.4 · L287–L289</a></figcaption><pre><code><span class="code-line"><b>287</b>func canPreemptM(mp *m) bool {</span>
+<span class="code-line"><b>288</b>	return mp.locks == 0 &amp;&amp; mp.mallocing == 0 &amp;&amp; mp.preemptoff == &quot;&quot; &amp;&amp; mp.p.ptr().status == _Prunning</span>
+<span class="code-line"><b>289</b>}</span></code></pre></figure>
+<p>这里的 <code>mp.locks</code> 等是运行时内部状态，不能理解成“业务代码只要持有 sync.Mutex 就不能被抢占”。持有业务互斥锁的 G 完全可能被换下；其他 G 仍然要等它以后继续执行并释放锁。</p>
+<p>安全条件不满足时，这次尝试不会强行切走。请求可能在之后的同步检查或异步机会中得到响应。异步抢占改善可调度性，仍不提供业务优先级、固定轮转顺序或实时延迟保证。</p>
+<p class="source"><a href="https://go.dev/doc/go1.14#runtime">Go 1.14 异步抢占说明</a> · <a data-src="src/runtime/proc.go" data-line="6304" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6304">preemptone</a> · <a data-src="src/runtime/signal_unix.go" data-line="340" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/signal_unix.go#L340">SIGURG 与上下文调整</a> · <a data-src="src/runtime/preempt.go" data-line="302" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/preempt.go#L302">asyncPreempt2 / 安全点检查</a> · <a data-src="src/runtime/os_windows.go" data-line="1235" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/os_windows.go#L1235">Windows preemptM</a></p>
+
+<h3 id="stw">4.12 STW：怎样让所有 P 配合停下来？</h3>
+<p>GC 在部分阶段切换时需要暂停普通 Go 执行。发起方通过 <code>stopTheWorldWithSema</code> 设置 <code>gcwaiting</code>、初始化 <code>stopwait</code>，并调用 <code>preemptall</code> 请求运行中的 P 配合。接下来根据 P 的状态分别处理：</p>
+<div class="table-wrap"><table><thead><tr><th>P 的状态</th><th>停止方式</th></tr></thead><tbody>
+<tr><td>发起方当前的 P</td><td>直接记录为 <code>_Pgcstop</code>，减少停止计数。</td></tr>
+<tr><td>空闲 P</td><td>从空闲列表取出，记录为 <code>_Pgcstop</code>，减少停止计数。</td></tr>
+<tr><td>系统调用中的 P</td><td>尝试 CAS：<code>_Psyscall → _Pgcstop</code>。P 已与 M 脱离，不必等 M 的系统调用返回。</td></tr>
+<tr><td>正在运行的 P</td><td>经抢占或其他调度机会观察到 <code>gcwaiting</code>，典型路径进入 <code>gcstopm</code>，释放 P、记录停止并减少计数。</td></tr>
+</tbody></table></div>
+<figure class="diagram">
+<svg viewBox="0 0 940 355" role="img" aria-labelledby="stw-title stw-desc">
+<title id="stw-title">STW 的停止确认与恢复</title><desc id="stw-desc">发起方设置全局停止请求。当前或空闲 P 直接登记停止，syscall 中的 P 可用 CAS 登记停止，运行 P 经抢占或调度机会进入 gcstopm。停止计数归零后才完成全局停止，必要工作完成后恢复调度。</desc>
+<defs><marker id="stw-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="var(--accent)"/></marker></defs>
+<rect class="box ready-zone" x="180" y="15" width="580" height="50"/><text x="470" y="46" text-anchor="middle" class="label">发起停止：gcwaiting = true，stopwait = P 数量</text>
+<path class="arr" d="M470 70V90H155V108M470 90V108M470 90H785V108" marker-end="url(#stw-arrow)"/>
+<rect class="pbox" x="15" y="118" width="280" height="80"/><text x="155" y="149" text-anchor="middle" class="label">当前 / 空闲 P</text><text x="155" y="178" text-anchor="middle" class="small">直接登记停止，stopwait--</text>
+<rect class="box m-resource" x="330" y="118" width="280" height="80"/><text x="470" y="149" text-anchor="middle" class="label">syscall 中的 P</text><text x="470" y="178" text-anchor="middle" class="small">CAS 成功后登记，stopwait--</text>
+<rect class="box ready-zone" x="645" y="118" width="280" height="80"/><text x="785" y="149" text-anchor="middle" class="label">运行中的 P</text><text x="785" y="178" text-anchor="middle" class="small">配合进入 gcstopm，stopwait--</text>
+<path class="arr" d="M155 203V225H470M785 203V225H470M470 203V244" marker-end="url(#stw-arrow)"/>
+<rect class="pbox" x="180" y="254" width="580" height="80"/><text x="470" y="284" text-anchor="middle" class="label">stopwait == 0：全局停止得到确认</text><text x="470" y="313" text-anchor="middle" class="small">完成需要 STW 的工作 → startTheWorld → 恢复调度</text>
+</svg>
+<figcaption>停止靠请求、计数与检查共同协调；仅发出抢占请求，还不等于所有 P 已停下。</figcaption>
+</figure>
+<p>对于运行中的 G，一条普通响应路径是 <code>preemptone → gopreempt_m / goschedImpl → schedule / findRunnable → gcstopm</code>。G 可以先回到 runnable，而 P 随后停止。全局 STW <strong>不会统一设置所有 G 的 preemptStop，再让它们全部经过 preemptPark</strong>；后者主要用于 <code>suspendG</code> 暂停指定 G 等路径。</p>
+<p>需要等待的 P 尚未全部停下时，发起方等待停止通知，并按实现策略重复提出抢占请求。处于运行时暂不允许抢占的区域，可能拉长停止确认阶段；正常 cgo 调用则可以与 P 脱离，不能把 cgo 执行时间直接等同于 STW 等待时间。</p>
+<h4>STW 变长，先区分是哪一段</h4>
+<div class="table-wrap"><table><thead><tr><th>指标</th><th>测量范围</th></tr></thead><tbody>
+<tr><td><code>/sched/pauses/stopping/gc:seconds</code></td><td>从决定停止世界，到所有 P 停下；期间仍可能有线程在执行。</td></tr>
+<tr><td><code>/sched/pauses/total/gc:seconds</code></td><td>从决定停止世界，到恢复世界，包含前面的停止确认阶段。</td></tr>
+</tbody></table></div>
+<p>先比较这两类分布，并结合 trace 定位具体暂停，再判断是等待停下，还是停止后的工作耗时。两个直方图的 p99 不能直接相减来得到另一阶段的 p99。</p>
+<p class="source"><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L1537">stopTheWorldWithSema</a> · <a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L6281">preemptall / preemptone</a> · <a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L3173">gcstopm</a> · <a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L1659">startTheWorldWithSema</a> · <a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/preempt.go#L100">suspendG</a> · <a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/metrics/description.go#L419">停止与总暂停指标</a></p>
+
+<h3 id="gosched">4.13 Gosched：主动让出，但仍然可以运行</h3>
+<p><code>runtime.Gosched()</code> 让当前 G 暂时交出执行机会。它没有等待某个条件，因此 G 会从 running 变为 <strong>runnable</strong>，以后无需另一方专门唤醒就能继续。</p>
+<div class="chain"><code>runtime.Gosched()</code><span>→</span><code>mcall(gosched_m)</code><span>→</span><code>goschedImpl(gp, false)</code></div>
+<figure class="source-code"><figcaption><a href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L351-L354">src/runtime/proc.go · Go 1.23.4 · L351–L354</a></figcaption><pre><code><span class="code-line"><b>351</b>func Gosched() {</span>
+<span class="code-line"><b>352</b>	checkTimeouts()</span>
+<span class="code-line"><b>353</b>	mcall(gosched_m)</span>
+<span class="code-line"><b>354</b>}</span></code></pre></figure>
+<p>在此版本的 <code>goschedImpl</code> 中，运行时把 G 改成 runnable，解除当前 M 与 G 的执行关联，将 G 放进<strong>全局运行队列</strong>，必要时尝试唤醒 M，然后调用 <code>schedule</code> 找下一项工作。这个 G 将来被选中后，从 <code>Gosched()</code> 调用后面继续。</p>
+<div class="table-wrap"><table><thead><tr><th>动作</th><th>G 停下后的状态</th><th>怎样继续</th></tr></thead><tbody>
+<tr><td><code>runtime.Gosched()</code></td><td>runnable</td><td>等待调度器再次选择；没有业务条件需要满足。</td></tr>
+<tr><td>尚不能完成的 channel 操作</td><td>waiting</td><td>相应通信、关闭等事件使它就绪，再等待调度。</td></tr>
+<tr><td><code>time.Sleep(d)</code>，d &gt; 0</td><td>等待 timer</td><td>定时条件满足后就绪；不能保证恰好在 d 后开始执行。</td></tr>
+<tr><td>普通抢占后的重新调度</td><td>通常回到 runnable</td><td>运行时发起而非业务主动调用；特殊暂停请求另有路径。</td></tr>
+</tbody></table></div>
+<p>放进全局队列会改变当前 G 再次参与选择的位置，但不保证某个其他 G 一定先执行；没有其他可执行任务时，当前 G 也可以很快回来。它既不表示“暂停固定时长”，也不能充当限流或同步协议。</p>
+<p>例如 <code>for !ready { runtime.Gosched() }</code> 仍然在反复检查条件；如果 <code>ready</code> 是无同步的共享变量，还可能存在数据竞争。确实要等事件，应使用 channel、条件变量或其他合适的同步。把 <code>Gosched</code> 用作调度实验的观察入口，比把它当成常规修复手段更合适。</p>
+<p class="source"><a data-src="src/runtime/proc.go" data-line="351" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L351">Gosched</a> · <a data-src="src/runtime/proc.go" data-line="4105" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4105">goschedImpl</a> · <a data-src="src/runtime/proc.go" data-line="4142" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go#L4142">gosched_m / gopreempt_m</a></p>
+
+</section>
+
+<section id="lab">
+<h2><span class="n">05</span>四个最小实验：等待、计算、让出与抢占</h2>
+<p>下面四项在本机执行，使用同一份仅依赖标准库的 Go 程序。实验主动设置 <code>GOMAXPROCS(1)</code>，把普通 Go 代码的并行名额固定为一个，便于观察。实验观察指定行为，不直接验证所有 M 的内部状态。</p>
+<div class="lab-actions"><button id="download-lab" class="primary" type="button">下载实验代码 gmp-lab.go</button><a href="#lab-code">查看完整代码</a><span id="download-status" class="subtle" role="status"></span></div>
+<h3>实验 A：64 个任务，各 Sleep 80ms</h3>
+<p><strong>要区分的两种解释：</strong>如果每个等待都占住唯一执行名额，总耗时会接近 64 × 80ms；若等待时 G 可以挂起，其他任务就有机会也进入等待，总耗时会更接近一轮等待再加调度开销。</p>
+<pre><code>go build -o gmp-lab.exe gmp-lab.go
+.\gmp-lab.exe -mode wait -trace wait.trace
+go tool trace wait.trace</code></pre>
+<p class="subtle">上面是 Windows PowerShell 命令；Linux/macOS 可将构建目标改为 gmp-lab，并用 ./gmp-lab 运行。</p>
+<h3>实验 B：固定计算量，1 个 worker 与 8 个 worker</h3>
+<p>两组均完成 8 份计算、共 6400 万次循环，返回校验值以保留计算结果；先预热，再各测 3 次并取中位数。核心区别只有 worker 数；GOMAXPROCS 始终为 1。观察目标是“增加 G 能否凭空获得 8 倍计算并行度”，不是得出普遍性能排行榜。</p>
+<p><code>burn</code> 的循环体没有函数调用，最终结果参与校验值并打印，使计算结果对外可观察，避免因结果未使用而失去测量意义。必要时可检查编译后的指令，确认测量的确包含预期计算。</p>
+<pre><code>.\gmp-lab.exe -mode cpu</code></pre>
+<div class="note"><strong>本机实际结果</strong><br>Go 1.23.4 · Windows/amd64 · NumCPU=6 · GOMAXPROCS=1；2026-11-02 执行。<br>A：64 个任务等待 80ms，总耗时 <strong>80.854ms</strong>；释放任务前存活 G 为 66（含主任务与跟踪辅助任务）。<br>B：1 worker 中位数 <strong>103.376ms</strong>，8 workers 中位数 <strong>105.732ms</strong>；两组校验值均为 1140102452049926520。<br><span class="subtle">B 的 3 次原始样本：1 worker [103.1717, 103.3756, 103.6323]ms；8 workers [104.7347, 105.7322, 106.5045]ms。8 workers 没有在单 P 下获得 8 倍计算并行度；这约 2% 的差异不足以单独归纳普遍性能结论。</span></div>
+<p>实验 A 说明多个等待可以在单 P 下交错推进；不能据此证明每个 OS 线程的数量，也不能把 Sleep 的行为直接推成所有系统调用。实验 B 的数据只对这里的固定工作量成立，机器负载和测量噪声会改变耗时；结论来自“一次只给一个 Go 执行名额”与实测相互印证。</p>
+<h3>实验 C：Gosched 之后，是 waiting 还是 runnable？</h3>
+<p>两个 worker 各运行两轮，每轮打印 before，调用 <code>runtime.Gosched()</code>，恢复后再打印 after。GOMAXPROCS 固定为 1，用输出观察交错，用 trace 核对状态。</p>
+<pre><code>.\gmp-lab.exe -mode yield -trace yield.trace
+go tool trace -d=1 yield.trace</code></pre>
+<details><summary>本机实际输出</summary><pre><code>env=go1.23.4 windows/amd64 NumCPU=6 P=1
+yield worker=2 turn=1 before
+yield worker=1 turn=1 before
+yield worker=2 turn=1 after
+yield worker=2 turn=2 before
+yield worker=1 turn=1 after
+yield worker=1 turn=2 before
+yield worker=2 turn=2 after
+yield worker=1 turn=2 after</code></pre></details>
+<p>本次输出出现了两个 worker 的交错执行；trace 中，调用处的状态变化为 <code>Running → Runnable</code>，原因标记为 <code>runtime.Gosched</code>。打印顺序不是固定轮转保证；仅凭输出，也无法推断任务究竟进入了哪个队列，队列去向要对照源码。</p>
+<h3>实验 D：无函数调用的计算循环，会挡住定时回调多久？</h3>
+<p>先注册一个 10ms 定时回调，再在当前 G 上执行 1.6 亿次循环，循环体只有整数运算。对比默认配置与 <code>asyncpreemptoff=1</code>，两次都采集 trace。</p>
+<pre><code>.\gmp-lab.exe -mode preempt -trace preempt.trace
+
+# PowerShell：仅在这次对照中关闭异步抢占，然后恢复原配置
+$previousDebug = $env:GODEBUG
+try {
+    $env:GODEBUG = "asyncpreemptoff=1"
+    .\gmp-lab.exe -mode preempt -trace preempt-off.trace
+} finally {
+    $env:GODEBUG = $previousDebug
+}</code></pre>
+<p class="subtle">上面是 PowerShell 的保存与恢复写法。其他 Shell 可使用只对单次命令生效的配置：</p>
+<pre><code># POSIX Shell / Git Bash / Linux / macOS
+GODEBUG=asyncpreemptoff=1 ./gmp-lab -mode preempt -trace preempt-off.trace
+
+# Windows cmd：通过子进程限制配置作用范围
+cmd /c "set GODEBUG=asyncpreemptoff=1&amp;&amp; gmp-lab.exe -mode preempt -trace preempt-off.trace"</code></pre>
+<div class="table-wrap"><table><thead><tr><th>本机配置</th><th>回调实际开始时间</th><th>计算结束时间</th></tr></thead><tbody>
+<tr><td>默认异步抢占</td><td>11.371ms</td><td>255.806ms</td></tr>
+<tr><td>关闭异步抢占</td><td>255.237ms</td><td>255.237ms</td></tr>
+</tbody></table></div>
+<p>时间均相对定时器注册前的起点；环境同实验 A/B，两次计算校验值均为 <code>413031963160641923</code>。默认配置下，回调在长循环完成前执行，trace 也记录到了计算 G 的 <code>preempted</code> 事件。对照配置下，回调延后到循环结束附近执行。</p>
+<h4>怎样在 trace 中确认？</h4>
+<p>分别运行下面的命令，逐个打开两份轨迹：</p>
+<pre><code>go tool trace preempt.trace
+go tool trace preempt-off.trace</code></pre>
+<ol>
+<li>定位执行 <code>burn</code> 的主 G，以及 <code>time.AfterFunc</code> 创建的回调 G，对齐计算开始、回调执行和计算结束的位置。</li>
+<li>在默认配置的轨迹中，观察计算循环结束前是否出现主 G 的 <code>Running → Runnable</code> 抢占，再看回调 G 何时获得 P 并开始执行。</li>
+<li>在对照轨迹中，观察主 G 连续计算的区间，以及回调是否推迟到循环结束附近。以实际轨迹为准，不预设抢占必然发生在 10ms，也不预设回调就绪后立即运行。</li>
+</ol>
+<p>需要查看文本事件和关联调用栈时，可以分别执行：</p>
+<pre><code>go tool trace -d=1 preempt.trace
+go tool trace -d=1 preempt-off.trace</code></pre>
+<p><strong>这不表示所有回调都能在 10ms 左右得到执行。</strong>采样、OS 调度、机器负载和具体代码都会影响结果。<code>asyncpreemptoff</code> 只关闭异步抢占，同步安全点仍然存在，因此对照 trace 也可能出现抢占事件；应结合事件位置、调用栈与回调时刻判断。</p>
+
+<h3>trace 里看什么？</h3>
+<ol><li>打开实验 A 的 trace，寻找 worker 的等待、唤醒和再次运行；关注 timer/sleep、channel 与同步相关的状态变化。</li><li>把一个 G 的 <strong>waiting → runnable</strong> 与 <strong>runnable → running</strong> 分开看。前者是条件满足，后者才是获得执行机会。</li><li>查看调度延迟（scheduler latency）与时间线，判断“就绪后等了多久”。需要时导出调度延迟 profile；它与 CPU 热点 profile 回答的问题不同。</li></ol>
+<pre><code>go tool trace -pprof=sched wait.trace &gt; sched.pprof
+go tool pprof sched.pprof</code></pre>
+<p class="subtle">上面的二进制重定向在 PowerShell 7.4+、cmd 或 POSIX shell 下使用；旧 Windows PowerShell 应避免以文本方式重定向 profile。阅读 trace 的输出格式可能随 Go 版本变化。</p>
+<p class="source">运行时跟踪依据：<a href="https://pkg.go.dev/cmd/trace">cmd/trace</a>、<a href="https://go.dev/doc/diagnostics">官方诊断指南</a>。实验覆盖等待交错、单 P 计算、主动让出与异步抢占对照；工作窃取和休眠协议的具体分支以源码为据。</p>
+<details id="lab-code"><summary>完整实验代码：可复制、下载、独立编译</summary><pre><code id="lab-program">package main
+
+import (
+	&quot;flag&quot;
+	&quot;fmt&quot;
+	&quot;os&quot;
+	&quot;runtime&quot;
+	&quot;runtime/trace&quot;
+	&quot;sort&quot;
+	&quot;sync&quot;
+	&quot;time&quot;
+)
+
+func burn(n uint64) uint64 {
+	x := uint64(0x123456789abcdef)
+	for i := uint64(0); i &lt; n; i++ {
+		x ^= x &lt;&lt; 13
+		x ^= x &gt;&gt; 7
+		x ^= x &lt;&lt; 17
+	}
+	return x
+}
+
+func cpu(workers int) (time.Duration, uint64) {
+	const tasks = 8
+	jobs := make(chan struct{}, tasks)
+	results := make(chan uint64, tasks)
+	for i := 0; i &lt; tasks; i++ {
+		jobs &lt;- struct{}{}
+	}
+	close(jobs)
+	start := time.Now()
+	for i := 0; i &lt; workers; i++ {
+		go func() {
+			for range jobs {
+				results &lt;- burn(8_000_000)
+			}
+		}()
+	}
+	var sum uint64
+	for i := 0; i &lt; tasks; i++ {
+		sum += &lt;-results
+	}
+	return time.Since(start), sum
+}
+
+func main() {
+	mode := flag.String(&quot;mode&quot;, &quot;wait&quot;, &quot;wait, cpu, yield, or preempt&quot;)
+	tracePath := flag.String(&quot;trace&quot;, &quot;&quot;, &quot;optional execution trace path&quot;)
+	flag.Parse()
+	runtime.GOMAXPROCS(1)
+	if *tracePath != &quot;&quot; {
+		f, err := os.Create(*tracePath)
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close()
+		if err := trace.Start(f); err != nil {
+			panic(err)
+		}
+		defer trace.Stop()
+	}
+	fmt.Printf(&quot;env=%s %s/%s NumCPU=%d P=%d\n&quot;, runtime.Version(), runtime.GOOS, runtime.GOARCH, runtime.NumCPU(), runtime.GOMAXPROCS(0))
+	switch *mode {
+	case &quot;wait&quot;:
+		const n = 64
+		start := make(chan struct{})
+		var ready, done sync.WaitGroup
+		ready.Add(n)
+		done.Add(n)
+		for i := 0; i &lt; n; i++ {
+			go func() {
+				defer done.Done()
+				ready.Done()
+				&lt;-start
+				time.Sleep(80 * time.Millisecond)
+			}()
+		}
+		ready.Wait()
+		peak := runtime.NumGoroutine()
+		begin := time.Now()
+		close(start)
+		done.Wait()
+		fmt.Printf(&quot;wait tasks=%d sleep=80ms elapsed=%v live-before-release=%d\n&quot;, n, time.Since(begin).Round(time.Microsecond), peak)
+	case &quot;cpu&quot;:
+		_, _ = cpu(1) // warm-up
+		for _, workers := range []int{1, 8} {
+			times := make([]time.Duration, 3)
+			var sum uint64
+			for i := range times {
+				times[i], sum = cpu(workers)
+			}
+			sort.Slice(times, func(i, j int) bool { return times[i] &lt; times[j] })
+			fmt.Printf(&quot;cpu tasks=8 workers=%d total-iterations=64000000 median=%v checksum=%d samples=%v\n&quot;, workers, times[1].Round(time.Microsecond), sum, times)
+		}
+	case &quot;yield&quot;:
+		var wg sync.WaitGroup
+		wg.Add(2)
+		for id := 1; id &lt;= 2; id++ {
+			id := id
+			go func() {
+				defer wg.Done()
+				for turn := 1; turn &lt;= 2; turn++ {
+					fmt.Printf(&quot;yield worker=%d turn=%d before\n&quot;, id, turn)
+					runtime.Gosched()
+					fmt.Printf(&quot;yield worker=%d turn=%d after\n&quot;, id, turn)
+				}
+			}()
+		}
+		wg.Wait()
+	case &quot;preempt&quot;:
+		begin := time.Now()
+		timerDone := make(chan struct{})
+		time.AfterFunc(10*time.Millisecond, func() {
+			fmt.Printf(&quot;preempt timer-delay=%v\n&quot;, time.Since(begin).Round(time.Microsecond))
+			close(timerDone)
+		})
+		sum := burn(160_000_000) // loop body has no function call
+		fmt.Printf(&quot;preempt cpu-finished=%v checksum=%d\n&quot;, time.Since(begin).Round(time.Microsecond), sum)
+		&lt;-timerDone
+	default:
+		panic(&quot;unknown mode&quot;)
+	}
+}
+</code></pre></details>
+</section>
+
+<section id="diagnose">
+<h2><span class="n">06</span>把原理变成一次实际排查</h2>
+<p><a href="cases/concurrency-performance.html#investigation">结合真实案例：取证命令、证据边界与修复验证 →</a></p>
+<p>假设某个任务处理程序变慢了，不必先背调度源码。先问：它是在<strong>做计算、等执行机会，还是等外部条件</strong>？下面按证据继续缩小范围。</p>
+<div class="table-wrap"><table><thead><tr><th>看到的证据</th><th>可以形成的假设</th><th>下一项验证 / 行动</th></tr></thead><tbody>
+<tr><td>CPU profile 中业务计算占主导，可用 CPU 接近饱和</td><td>计算量、算法或分配等在消耗执行资源。</td><td>先优化热点；用固定工作量比较 worker 数。并发控制可以减少争抢，不能替代计算本身。</td></tr>
+<tr><td>trace 中 runnable 等待增加</td><td>任务已经能跑，但迟迟没获得执行；可能是负载过高、资源配额、GC 竞争等。</td><td>关联 P 使用、GC 时间线与 OS/容器指标；不能单凭这一项宣布“调度器有 bug”。</td></tr>
+<tr><td>CPU 不高，堆栈集中在 channel 或同步等待</td><td>可能是生产消费不平衡、持锁过久、等待条件不能满足。</td><td>沿等待链查谁负责推进；看 block/mutex profile。增加 GOMAXPROCS 未必有帮助。</td></tr>
+<tr><td>大量 I/O wait，且外部请求耗时增加</td><td>瓶颈可能在远端或网络；G 被正确挂起并不让远端变快。</td><td>核对超时、取消、外部容量与调用并发；控制在途任务，避免把等待变成无界积压。</td></tr>
+<tr><td>线程增长，并伴随 syscall/cgo 活动</td><td>部分 M 被外部调用占用，运行时可能启用其他 M。</td><td>关联 threadcreate、goroutine 栈与原生库指标；限制该类调用并发，继续确认是否存在泄漏。</td></tr>
+<tr><td>CPU 配额被节流，延迟与节流时间相关</td><td>OS/容器不给足够 CPU 时间，不能只在 Go 队列内部找原因。</td><td>核对工具链版本、实际 GOMAXPROCS、手工覆盖及 CPU 配额；依据负载调整后再测。</td></tr>
+</tbody></table></div>
+<h3>值得熟悉的三个入口</h3>
+<p><strong>执行轨迹：</strong>用 <code>runtime/trace</code> 在有限时间内采集，观察 G 的等待、就绪、执行与抢占。</p>
+<p><strong>调度摘要：</strong>先构建程序，再给运行的二进制设置 <code>GODEBUG</code>。以下命令使用实验程序；排查实际负载时替换为对应程序与参数。</p>
+<pre><code># PowerShell：运行后恢复原来的 GODEBUG
+$previousDebug = $env:GODEBUG
+try {
+    $env:GODEBUG = "schedtrace=1000"
+    .\gmp-lab.exe -mode cpu
+} finally {
+    $env:GODEBUG = $previousDebug
+}
+
+# POSIX Shell / Git Bash / Linux / macOS：只作用于这次运行
+GODEBUG=schedtrace=1000 ./gmp-lab -mode cpu
+
+# Windows cmd：只修改子进程环境
+cmd /c "set GODEBUG=schedtrace=1000&amp;&amp; gmp-lab.exe -mode cpu"</code></pre>
+<p><strong>竞态检测：</strong>检查测试实际执行路径上的数据竞争。</p>
+<pre><code>go test -race ./...</code></pre>
+<p><code>schedtrace=1000</code> 表示约每 1000ms 输出调度摘要。示例程序很短，可能只看到启动附近的一条；要持续观察应选择运行更久的实际负载。摘要中的线程数、空闲 P、全局队列与各本地队列长度都是线索，不是单项故障判据。<code>-race</code> 检查数据竞争，不保证发现所有业务竞态、死锁或泄漏。</p>
+<div class="note"><strong>版本差异直接影响建议：</strong>Go 1.23.4 默认并行度不具备 Go 1.25 引入的容器 CPU 带宽配额感知行为。Go 1.25 引入新默认值和更新机制，但具体仍受平台、模块语言版本兼容设置、环境变量及显式 GOMAXPROCS 调用影响。先确认实际生效值，再讨论是否覆盖；不要无条件照搬旧的容器调优教程。</div>
+<p class="source">依据：<a data-src="src/runtime/extern.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/extern.go">GODEBUG / schedtrace 文档</a>、<a href="https://go.dev/doc/articles/race_detector">Race Detector</a>、<a href="https://go.dev/blog/container-aware-gomaxprocs">官方容器并行度说明</a>、<a href="https://go.dev/doc/go1.25#runtime">Go 1.25 runtime 版本说明</a>。</p>
+</section>
+
+<section id="depth">
+<h2><span class="n">07</span>资深开发者，学到哪一层最划算？</h2>
+<ul class="checklist">
+<li><strong>必须能解释：</strong>G、M、P 的区别；runnable 与 waiting；并发与并行；为什么 GOMAXPROCS 不是线程数或 goroutine 数上限。</li>
+<li><strong>必须能判断：</strong>channel 等待、网络轮询与阻塞系统调用的差别；为什么加 worker、加 P 或引入协程池都需要前提。</li>
+<li><strong>必须能取证：</strong>用 profile 找计算与等待热点，用 trace 查看就绪到执行的过程；用同步原语保证顺序，用 race detector 辅助发现问题；能区分 Gosched 的主动让出与条件等待。</li>
+<li><strong>值得会读：</strong>newproc、schedule / findRunnable、park / ready、syscall 交接、stealWork、自旋与唤醒、netpoll、sysmon、两类抢占路径以及 STW 停止确认与恢复路径。遇到具体问题时，能沿固定版本源码查到边界。</li>
+<li><strong>按需深挖：</strong>汇编的逐条寄存器操作、唤醒协议的全部竞争窗口、各平台信号/线程细节。除非排查 runtime、cgo 或极端性能问题，不必先把这些背下来。</li>
+</ul>
+<p>一个 G 得到 CPU，需要经过<strong>条件已满足 → 进入可运行状态 → 被持有 P 的 M 选中 → M 获得 OS 执行时间</strong>。排查耗时时，要区分延迟发生在哪一段。</p>
+</section>
+
+<section id="references">
+<h2>源码与参考</h2>
+<p>源码固定到 <a href="https://github.com/golang/go/commit/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95">Go 1.23.4</a>，实验环境为 Windows/amd64。GMP 属于运行时实现，具体策略随版本与平台变化。</p>
+<ol class="sources">
+<li><a data-src="src/runtime/HACKING.md" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/HACKING.md">runtime/HACKING.md</a>：G、M、P、用户栈与系统栈。</li>
+<li><a data-src="src/runtime/runtime2.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/runtime2.go">runtime/runtime2.go</a>：G/P 状态与 g、m、p 结构。</li>
+<li><a data-src="src/runtime/proc.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/proc.go">runtime/proc.go</a>：创建、执行、等待、syscall、窃取、监控与抢占。</li>
+<li><a data-src="src/runtime/stack.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/stack.go">runtime/stack.go</a>：栈大小、复制、伸缩与同步抢占。<a data-src="src/runtime/signal_unix.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/signal_unix.go">signal_unix.go</a>：Unix 抢占信号与上下文。<a data-src="src/runtime/mgc.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/mgc.go">mgc.go</a>、<a data-src="src/runtime/mgcscavenge.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/mgcscavenge.go">mgcscavenge.go</a>：GC 触发与内存归还。</li>
+<li><a data-src="src/runtime/preempt.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/preempt.go">runtime/preempt.go</a>、<a data-src="src/runtime/asm_amd64.s" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/asm_amd64.s">asm_amd64.s</a>、<a data-src="src/runtime/os_windows.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/os_windows.go">os_windows.go</a>：安全点、上下文切换与平台实现。</li>
+<li><a data-src="src/runtime/netpoll.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/netpoll.go">runtime/netpoll.go</a>、<a data-src="src/runtime/netpoll_windows.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/netpoll_windows.go">netpoll_windows.go</a>、<a data-src="src/runtime/netpoll_epoll.go" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/src/runtime/netpoll_epoll.go">netpoll_epoll.go</a>：I/O 等待与平台轮询。</li>
+<li><a href="https://go.dev/doc/diagnostics">Go Diagnostics</a>、<a href="https://pkg.go.dev/cmd/trace">cmd/trace</a>、<a href="https://go.dev/doc/articles/race_detector">Data Race Detector</a>：观察与验证工具。</li>
+<li><a href="https://go.dev/blog/container-aware-gomaxprocs">Container-aware GOMAXPROCS</a>、<a href="https://go.dev/doc/go1.25#runtime">Go 1.25 release notes</a>：用于注明较新版本差异，不与 Go 1.23.4 的源码混写。</li>
+<li>少量 Go 源码节选版权归 The Go Authors，采用仓库 <a data-src="LICENSE" href="https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/LICENSE">BSD 许可</a>；完整实现以原仓库为准。</li>
+</ol>
+</section>
+</main>
+</div>
+<script>
+(function(){
+'use strict';
+const sourceBase='https://github.com/golang/go/blob/194de8fbfaf4c3ed54e1a3c1b14fc67a830b8d95/';
+document.querySelectorAll('[data-src]').forEach(function(a){a.href=sourceBase+a.dataset.src+(a.dataset.line?'#L'+a.dataset.line:'');});
+const slots={run0:[270,65],run1:[745,65],q0a:[120,228],q0b:[220,228],n0:[340,228],q1a:[595,228],q1b:[695,228],n1:[815,228],waitA:[120,387],waitB:[225,387],globalA:[595,387],globalB:[700,387]};
+function g(id,slot,state){return {id:id,slot:slot,state:state||'runnable'};}
+function s(title,body,gs,line,extra){return Object.assign({title:title,body:body,gs:gs,line:line,m0:'M0 · 持有 P0',m1:'M1 · 持有 P1',p0:{state:'running',owner:'M0'},p1:{state:'running',owner:'M1'},wait:'等待区 · 不在运行队列中'},extra||{});}
+const cases={
+create:{note:'简化：展示一次 runnext 入队与后续选中。它不保证新 G 先于创建者后面的语句执行。',steps:[
+s('G1 正在执行','M0 持有 P0，执行 G1。此时没有 G2。',[g('G1','run0','running')],4974),
+s('执行 go f()：准备 G2','newproc1 准备 G2 的栈、入口与状态；newproc 让 G2 成为 runnext 候选。G1 仍可以继续运行。',[g('G1','run0','running'),g('G2','n0')],4974),
+s('G1 暂时等待','这里假设 G1 接着等待某个条件。G1 进入 waiting，M0 与 P0 仍可调度其他 G。',[g('G1','waitA','waiting'),g('G2','n0')],4068),
+s('选中 G2','runqget 取到 G2，execute 关联 M0 并把 G2 切为 running。创建和开始执行之间有一段调度过程。',[g('G1','waitA','waiting'),g('G2','run0','running')],3208)
+]},
+park:{note:'简化：一次 channel 接收无法立即完成的情况。条件已满足的操作可能直接继续，不一定 park。',steps:[
+s('G1 运行，G2 就绪','G1 正在 M0 上运行，G2 位于 P0 本地队列。',[g('G1','run0','running'),g('G2','q0a')],407),
+s('G1 接收不到数据','G1 被登记到 channel 等待结构，进入 waiting。停下的是 G1，M0 仍持有 P0。',[g('G1','waitA','waiting'),g('G2','q0a')],4068),
+s('同一个 M0 运行 G2','M0 不必为了这次 channel 等待换成新线程，它可以执行 G2。',[g('G1','waitA','waiting'),g('G2','run0','running')],3966),
+s('G2 发来数据，G1 就绪','这里的唤醒路径把 G1 放成 runnext 候选。G2 尚未交出执行机会，G1 还不是 running。',[g('G1','n0'),g('G2','run0','running')],1022),
+s('G2 结束，G1 恢复','本图选择一种可能结果：M0 之后执行 G1，接收操作继续。真实运行也可能发生任务迁移。',[g('G1','run0','running')],3208)
+]},
+net:{note:'适用于运行时网络轮询支持的 I/O。事件到来后既可能直接选中一个任务，也可能批量注入队列；图只画一种路径。',steps:[
+s('G1 尝试网络读取','G1 运行，G2 就绪。网络数据可能立即可读，也可能还需要等待。',[g('G1','run0','running'),g('G2','q0a')],548,{file:'src/runtime/netpoll.go'}),
+s('读条件未满足，G1 挂起','netpollblock 使 G1 等待 I/O，相关状态由 pollDesc 等结构记录。',[g('G1','waitA','waiting'),g('G2','q0a')],548,{file:'src/runtime/netpoll.go',wait:'网络等待区 · 等待平台 I/O 事件'}),
+s('M0 继续执行 G2','等待期间不需要一个线程持续执行 G1 来轮询这个连接。所有工作都不足时，运行时也可能让某个线程阻塞等事件。',[g('G1','waitA','waiting'),g('G2','run0','running')],3249),
+s('I/O 事件到来，G1 就绪','示意从网络等待恢复成 runnable，再进入可供调度的队列。不是数据到达就必然立即开始运行。',[g('G1','globalA'),g('G2','run0','running')],494,{file:'src/runtime/netpoll.go'}),
+s('G1 在另一个 M 上继续','一种可能结果：M1 持有 P1 后选到 G1。网络读取继续，业务代码不应依赖它必须回到 M0。',[g('G1','run1','running'),g('G2','run0','running')],3208)
+]},
+syscall:{note:'展示普通 syscall 进入后、P 被 retake 的一种路径。已知阻塞入口可以更早 handoff；不表示所有调用都等待固定时长才转交。',steps:[
+s('G1 将进入系统调用','M0 / P0 正在执行 G1，G2 已就绪。',[g('G1','run0','running'),g('G2','q0a')],4390),
+s('M0 随 G1 进入 syscall','G1 进入 syscall，M0 与 P0 脱离。P0 处于可被回收的 syscall 状态；M0 此时不能执行 G2。',[g('G1','waitA','syscall'),g('G2','q0a')],4390,{m0:'M0 · 系统调用中，未持有 P0',p0:{state:'syscall',owner:null,affinity:'M0'},wait:'系统调用区 · G1 与 M0 在调用中'}),
+s('P0 被回收，交给 M2','满足回收条件后，运行时让另一个可用 M（此处编号 M2）取得 P0，开始执行 G2。M2 可来自空闲线程，不一定新建。',[g('G1','waitA','syscall'),g('G2','run0','running')],6201,{m0:'M2 · 接手 P0，运行 G2',p0:{state:'running',owner:'M2'},wait:'系统调用区 · M0 仍被占用'}),
+s('调用返回，但暂时没有 P','本图假设 M0 没能取得 P：G1 转为 runnable 等候，M0 可以休眠。快速取得 P 时则不必走这条排队路径。',[g('G1','globalA'),g('G2','run0','running')],4617,{m0:'M2 · 继续持有 P0',p0:{state:'running',owner:'M2'}}),
+s('稍后在 M1 上恢复','M1 取得 G1 后继续执行其 Go 代码。系统调用期间的 M 数量可以超过 P 数量。',[g('G1','run1','running'),g('G2','run0','running')],3208,{m0:'M2 · 持有 P0',p0:{state:'running',owner:'M2'}})
+]},
+steal:{note:'展示两个待运行任务被分成一批，窃取方执行其中一个。真实批量大小、目标选择及竞争结果以固定版本源码为准。',steps:[
+s('P0 忙，P1 没任务','G1 在 M0 上运行，P0 还排着 G2、G3。M1 持有 P1，正在寻找可执行任务。',[g('G1','run0','running'),g('G2','q0a'),g('G3','q0b')],3654,{m1:'M1 · 持有 P1，寻找工作'}),
+s('P1 从 P0 取得一项待运行任务','示意取走一部分 runnable G，G2 到 P1 一侧。正在运行的 G1 不被搬走。',[g('G1','run0','running'),g('G2','q1a'),g('G3','q0b')],6940),
+s('M1 执行取得的 G2','runqsteal 实际可直接返回选中的 G 给调用者；中间“放在 P1 队列侧”是为了展示归属变化，并非必经的独立入队步骤。',[g('G1','run0','running'),g('G2','run1','running'),g('G3','q0b')],6940)
+]},
+preempt:{note:'展示普通异步抢占后重新调度的一条路径；特殊暂停请求另有分支，信号与线程上下文处理也随平台不同。',steps:[
+s('G1 长时间计算，G2 在等','G1 不主动等待或让出。G2 已 runnable，但还没在 M0 上执行。',[g('G1','run0','running'),g('G2','q0a')],6197),
+s('运行时提出抢占请求','sysmon / retake 判断并调用 preemptone，设置抢占标记。此时 G1 仍可能运行，请求不等于已经完成切换。',[g('G1','run0','running'),g('G2','q0a')],6304),
+s('平台取得现场，检查安全点','Unix 可通过信号、Windows 可通过线程上下文取得执行位置。检查 G、M、栈空间和 PC；不安全时暂不强行切走。',[g('G1','run0','running'),g('G2','q0a')],363,{file:'src/runtime/preempt.go'}),
+s('安排进入 asyncPreempt','这里假设满足安全条件：调整执行上下文，让 G1 恢复时进入 asyncPreempt，保存寄存器并转入调度路径。',[g('G1','run0','running'),g('G2','q0a')],302,{file:'src/runtime/preempt.go'}),
+s('G1 重新成为 runnable','普通重新调度路径经 goschedImpl，把 G1 放入全局运行队列。G1 没有在等待某个业务事件。',[g('G1','globalA'),g('G2','q0a')],4105),
+s('一种可能：M0 运行 G2','调度器随后选到 G2；G1 将来还可以恢复计算。G2 的业务执行时限没有因此得到硬保证。',[g('G1','globalA'),g('G2','run0','running')],3966)
+]},
+idle:{note:'简化为 P0 空闲、P1 后来提交新工作的一次过程。实际重新检查、网络轮询、timer 与唤醒竞争还有更多分支。',steps:[
+s('M0 本地已无工作','M1 / P1 正在执行 G1。M0 持有 P0，但当前没有可执行任务，开始检查工作来源。',[g('G1','run1','running')],3249,{m0:'M0 · 持有 P0，寻找工作'}),
+s('暂时自旋寻找','满足相关门槛后，M0 继续尝试窃取等工作来源，暂不进入 OS 休眠。这是寻找任务，不是在等待业务锁。',[g('G1','run1','running')],3359,{m0:'M0 · 自旋寻找，持有 P0'}),
+s('释放 P0，退出自旋并复查','这里假设再次检查后仍没有工作，且不进入阻塞网络轮询，M0 最终在 stopm 路径休眠。复查用于防止与任务发布竞争时漏掉工作。',[g('G1','run1','running')],3454,{m0:'M0 · 休眠；P0 已空闲',p0:{state:'idle',owner:null}}),
+s('M1 创建 G2，尝试唤醒工作线程','G2 入 P1 的 runnext。这里假设没有自旋 M 且存在空闲 P0：wakep 取得 P0，安排一个 M；本图复用 M0。',[g('G1','run1','running'),g('G2','n1')],3089,{m0:'M0 · 被唤醒并取得 P0'}),
+s('M0 找到 G2 并执行','这里展示 M0 经寻找 / 窃取得到 G2 的一种结果。P0 的执行资源重新得到利用，M1 仍可执行 G1。',[g('G1','run1','running'),g('G2','run0','running')],6940)
+]},
+yield:{note:'Gosched 后谁先执行由调度结果决定。图展示 G2 接着运行的一种可能，不承诺固定轮转顺序。',steps:[
+s('G1 运行，G2 就绪','M0 / P0 正在执行 G1，P0 队列里还有 G2。',[g('G1','run0','running'),g('G2','q0a')],351),
+s('G1 调用 runtime.Gosched','G1 经 gosched_m / goschedImpl 从 running 变成 runnable，解除执行关联，放入全局运行队列。',[g('G1','globalA'),g('G2','q0a')],4105),
+s('一种可能：选中 G2','G2 开始执行。G1 仍可运行，只是在排队；它无需等某个业务条件满足才重新就绪。',[g('G1','globalA'),g('G2','run0','running')],3966),
+s('G1 稍后恢复','这里假设 G2 结束后，G1 被选中，从 Gosched 调用之后继续。真实运行中，它也可能很快再次被选中。',[g('G1','run0','running')],3208)
+]}
+};
+const selector=document.getElementById('scenario'),tokens=document.getElementById('tokens');
+const prev=document.getElementById('prev'),next=document.getElementById('next'),play=document.getElementById('play');
+let index=0,timer=null,tokenMap={};
+const ns='http://www.w3.org/2000/svg';
+function makeToken(id){const e=document.createElementNS(ns,'g');e.classList.add('g-token');const rect=document.createElementNS(ns,'rect');rect.setAttribute('width','86');rect.setAttribute('height','55');rect.setAttribute('rx','8');const t=document.createElementNS(ns,'text');t.setAttribute('x','43');t.setAttribute('y','23');t.setAttribute('text-anchor','middle');t.setAttribute('class','gname');t.textContent=id;const u=document.createElementNS(ns,'text');u.setAttribute('x','43');u.setAttribute('y','44');u.setAttribute('text-anchor','middle');u.setAttribute('class','gstate');e.append(rect,t,u);tokens.appendChild(e);return e;}
+function stop(){if(timer!==null){clearInterval(timer);timer=null;}play.textContent='自动播放';play.setAttribute('aria-pressed','false');}
+function renderP(id,resource){
+ const names={running:'运行 (_Prunning)',idle:'空闲 (_Pidle)',syscall:'系统调用状态 (_Psyscall)'};
+ const owner=resource.owner ? resource.owner+' 持有' : (resource.affinity ? '无持有者；保留对 '+resource.affinity+' 的关联，可被回收' : '无持有者；位于空闲列表');
+ document.getElementById(id+'-label').textContent=id.toUpperCase()+' · '+names[resource.state];
+ document.getElementById(id+'-owner').textContent=owner;
+ const box=document.getElementById(id+'-box');
+ box.classList.remove('p-idle','p-syscall');
+ if(resource.state!=='running')box.classList.add('p-'+resource.state);
+ return id.toUpperCase()+'：'+names[resource.state]+'，'+owner;
+}
+function render(){
+ const c=cases[selector.value],step=c.steps[index],active={};
+ step.gs.forEach(function(item){active[item.id]=true;let e=tokenMap[item.id];if(!e){e=makeToken(item.id);tokenMap[item.id]=e;}const xy=slots[item.slot];e.style.transform='translate('+xy[0]+'px,'+xy[1]+'px)';e.style.opacity='1';e.classList.remove('running','waiting','syscall');e.classList.add(item.state);e.querySelector('.gstate').textContent=item.state;});
+ Object.keys(tokenMap).forEach(function(id){if(!active[id])tokenMap[id].style.opacity='0';});
+ document.getElementById('m0-label').textContent=step.m0;document.getElementById('m1-label').textContent=step.m1;document.getElementById('waiting-label').textContent=step.wait;
+ document.getElementById('step-title').textContent=step.title;document.getElementById('step-body').textContent=step.body;document.getElementById('step-count').textContent=(index+1)+' / '+c.steps.length;
+ const a=document.getElementById('step-source');a.href=sourceBase+(step.file||'src/runtime/proc.go')+'#L'+step.line;
+ document.getElementById('scenario-note').textContent=c.note;
+ const resourceSummary=renderP('p0',step.p0)+'；'+renderP('p1',step.p1);
+ document.getElementById('sim-desc').textContent=step.title+'。'+step.body+'。'+resourceSummary;
+ prev.disabled=index===0;next.disabled=index===c.steps.length-1;
+ if(index===c.steps.length-1)stop();
+}
+function change(){stop();index=0;tokens.replaceChildren();tokenMap={};render();}
+selector.addEventListener('change',change);prev.addEventListener('click',function(){stop();if(index>0)index--;render();});next.addEventListener('click',function(){stop();if(index<cases[selector.value].steps.length-1)index++;render();});document.getElementById('reset').addEventListener('click',change);
+play.addEventListener('click',function(){if(timer!==null){stop();return;}if(index===cases[selector.value].steps.length-1){index=0;render();}play.textContent='暂停';play.setAttribute('aria-pressed','true');timer=setInterval(function(){if(index<cases[selector.value].steps.length-1){index++;render();}else stop();},2400);});
+document.addEventListener('visibilitychange',function(){if(document.hidden)stop();});
+const printSteps=document.getElementById('print-steps');
+Object.keys(cases).forEach(function(key){const h=document.createElement('h3');h.textContent=selector.querySelector('option[value="'+key+'"]').textContent;printSteps.appendChild(h);cases[key].steps.forEach(function(step,i){const p=document.createElement('p');p.textContent=(i+1)+'. '+step.title+'：'+step.body;printSteps.appendChild(p);});});
+if(!navigator.onLine){/* All primary content and interactions are local. */}
+document.getElementById('download-lab').addEventListener('click',function(){const content=document.getElementById('lab-program').textContent;const u=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='gmp-lab.go';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},1500);document.getElementById('download-status').textContent='已生成代码下载，请查看浏览器下载记录。';});
+document.querySelectorAll('noscript').forEach(function(n){n.remove();});
+change();
+})();
+</script>
+</body>
+</html>
